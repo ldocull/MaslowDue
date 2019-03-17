@@ -96,19 +96,18 @@ The Arduino Due I/O point **16** outputs a PWM signal that corresponds to the cu
 allows direct control of a VFD or other speed control with a 0-10VDC input.
 
 ### PID
-The following parameters may require some adjustment depending on the weight of the sled/router system being used.
+The following parameters may require some adjustment depending on the weight of the sled/router system being used:
 
-$40=25600 (X-axis Kp) : This is the proportion constant scaled as xx.xxx
-$41=17408 (X-axis Ki) : This is the integral constant scaled as xx.xxx
-$42=21504 (X-axis Kd) : This is the derivative constant scaled as xx.xxx
-$43=5000 (X-axis Imax) : This is the maximum integer value that the integrator can build to
- 
-$50=25600 (Y-axis Kp)  : These are the PID constants for Y
-$51=17408 (Y-axis Ki) 
-$52=21504 (Y-axis Kd) 
-$53=5000 (Y-axis Imax) 
-
-$60=22528 (Z-axis Kp)  : These are the PID constants for Z 
-$61=17408 (Z-axis Ki) 
-$62=20480 (Z-axis Kd) 
-$63=5000 (Z-axis Imax) 
+    $40=25600 (X-axis Kp) : This is the proportion constant scaled as xx.xxx
+    $41=17408 (X-axis Ki) : This is the integral constant scaled as xx.xxx
+    $42=21504 (X-axis Kd) : This is the derivative constant scaled as xx.xxx
+    $43=5000 (X-axis Imax) : This is the maximum integer value that the integrator can build to
+     
+    $50=25600 (Y-axis Kp)  : These are the PID constants for Y
+    $51=17408 (Y-axis Ki) 
+    $52=21504 (Y-axis Kd) 
+    $53=5000 (Y-axis Imax) 
+    
+    $60=22528 (Z-axis Kp)  : These are the PID constants for Z  $61=17408    (Z-axis Ki)  
+    $62=20480 (Z-axis Kd)  
+    $63=5000 (Z-axis Imax)
