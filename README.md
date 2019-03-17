@@ -108,6 +108,7 @@ The following parameters may require some adjustment depending on the weight of 
     $52=21504 (Y-axis Kd) 
     $53=5000 (Y-axis Imax) 
     
-    $60=22528 (Z-axis Kp)  : These are the PID constants for Z  $61=17408    (Z-axis Ki)  
+    $60=22528 (Z-axis Kp)  : These are the PID constants for Z  
+    $61=17408 (Z-axis Ki)  
     $62=20480 (Z-axis Kd)  
     $63=5000 (Z-axis Imax)
