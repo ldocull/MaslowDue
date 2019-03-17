@@ -112,3 +112,14 @@ The following parameters may require some adjustment depending on the weight of 
     $61=17408 (Z-axis Ki)  
     $62=20480 (Z-axis Kd)  
     $63=5000 (Z-axis Imax)
+
+# Maslow-Due Shield Board
+
+There is not yet a shield board for this solution package, but if there was, it might look like this:
+![MaslowDue Shield Board Top View](https://imgur.com/Q4vgGMp.png)
+
+![MaslowDue Shield Board Bottom View](https://imgur.com/HdYtB6i.png)
+
+Gerbers and Schematics can be found on this repo under [Electronics](https://github.com/ldocull/MaslowDue/tree/master/Electronics).
+
+Peace!
