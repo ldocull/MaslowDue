@@ -27,6 +27,10 @@ The electronics which powers the Maslow-Due CNC Machine System is based on the o
 
 ![Circuit Adaptations](https://i.imgur.com/yb33BBk.png)
 
+**Note:** the board ID pins in the lower-left corner of the motor shield should be removed or not allowed to pass 5V to the Arduino Due.  Cutting the trace as shown below also stops the 5V from getting back to the I/O pins:
+![Cut 5V trace or remove pins..
+](https://imgur.com/uj6fcP6.png)
+
 Modifications can be made using a prototype shield like the [RobotDyn - Mega Protoshield Prototype Shield for Arduino Mega 2560](https://smile.amazon.com/RobotDyn-Protoshield-Prototype-breadboard-Assembled/dp/B071JDRGGR/ref=sr_1_3?keywords=mega%202560%20proto%20shield&qid=1552842751&s=gateway&sr=8-3).  This prevents any cutting or patching made directly to the Maslow Motor Shield or the Arduino Due. 
 
 # User Interface
@@ -72,7 +76,9 @@ These parameters make the conversion from encoder-counts to mm in the DUE config
 	*Note: if the direction of a motor needs to be reversed, the position increments and decrements must be reversed in the stepper.c : 
 
 		void timer4_handler(void) routine
+
 		...
+
 		 if ((st.step_outbits & (1 << X_STEP_BIT)) && (st.dir_outbits & (1 << X_DIRECTION_BIT)) == 0)
 		    x_axis.target++;
 		  else if ((st.step_outbits & (1 << X_STEP_BIT)) && (st.dir_outbits & (1 << X_DIRECTION_BIT)))
@@ -89,7 +95,10 @@ These parameters make the conversion from encoder-counts to mm in the DUE config
 		    z_axis.target++;
 		  else if ((st.step_outbits & (1 << Z_STEP_BIT)) && (st.dir_outbits & (1 << Z_DIRECTION_BIT)))
 		    z_axis.target--;
-.*
+
+		...
+
+
 
 ### Spindle Control
 The Arduino Due I/O point **16** outputs a PWM signal that corresponds to the currently programmed spindle speed. (S8000 for 8K RPM, M3 for spindle on, M5 for spindle off.) A converter such as this one from Amazon:  [PWM-to_Voltage Module](https://smile.amazon.com/gp/product/B0797NBC79/ref=ppx_yo_dt_b_asin_title_o03_s00?ie=UTF8&psc=1)
@@ -116,9 +125,9 @@ The following parameters may require some adjustment depending on the weight of 
 # Maslow-Due Shield Board
 
 There is not yet a shield board for this solution package, but if there was, it might look like this:
-![MaslowDue Shield Board Top View](https://imgur.com/Q4vgGMp.png)
+![MaslowDue Shield Board Top View](https://imgur.com/fsS9ltB.png)
 
-![MaslowDue Shield Board Bottom View](https://imgur.com/HdYtB6i.png)
+![MaslowDue Shield Board Bottom View](https://imgur.com/XNs0gSp.png)
 
 Gerbers and Schematics can be found on this repo under [Electronics](https://github.com/ldocull/MaslowDue/tree/master/Electronics).
 
