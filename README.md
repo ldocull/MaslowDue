@@ -1,6 +1,6 @@
 # MaslowCNC-Due
 
-### This is firmware to control a Maslow CNC type machine
+### This is firmware to control a Maslow CNC-type machine.
 
 # About this upgrade...
 
@@ -27,9 +27,9 @@ The electronics which powers the Maslow-Due CNC Machine System is based on the o
 
 ![Circuit Adaptations](https://i.imgur.com/yb33BBk.png)
 
-**Note:** the board ID pins in the lower-left corner of the motor shield should be removed or not allowed to pass 5V to the Arduino Due.  Cutting the trace as shown below also stops the 5V from getting back to the I/O pins:
-![Cut 5V trace or remove pins..
-](https://imgur.com/uj6fcP6.png)
+**Note:** _the board ID pins in the lower-left corner of the motor shield should be removed or not allowed to pass 5V to the Arduino Due. Cutting the trace as shown below also stops the 5V from getting back to the I/O pins:_
+
+![Cut 5V trace or remove pins..](https://imgur.com/uj6fcP6.png)
 
 Modifications can be made using a prototype shield like the [RobotDyn - Mega Protoshield Prototype Shield for Arduino Mega 2560](https://smile.amazon.com/RobotDyn-Protoshield-Prototype-breadboard-Assembled/dp/B071JDRGGR/ref=sr_1_3?keywords=mega%202560%20proto%20shield&qid=1552842751&s=gateway&sr=8-3).  This prevents any cutting or patching made directly to the Maslow Motor Shield or the Arduino Due.
 
@@ -42,28 +42,25 @@ The sender application, [bCNC](https://github.com/vlachoudis/bCNC) has been used
 The machine used with this Maslow-Due firmware uses a Meticulous-Z-Axis like setup which is an expansion of the Maslow CNC "stock" Z-axis kit:    http://maslowcommunitygarden.org/The-Meticulous-Z-Axis.html      Therefore, Z-Axis scaling and direction defaults are preset to such a configuration.
 
 Many of the parameters of GRBL are defaulted in the firmware and will not require adjustment, but some of the MaslowDue-specific parameters may require adjustment to fit your specific machine configuration.
-
-`$81=2438.400 (Bed Width, mm)`:   This defines a 8-foot wide work surface
-`$82=1219.200 (Bed Height, mm)`:   This defines a 4-foot high work surface
+```
+$81=2438.400 (Bed Width, mm): This defines a 8-foot wide work surface
+$82=1219.200 (Bed Height, mm): This defines a 4-foot high work surface
+```
 
 ## Machine Geometry
 The MaslowCNC machine that the MaslowDue firmware was developed for has a configuration as shown below:
 
 ![MaslowCNC Due Configuration](https://imgur.com/nKiqUgj.png)
 
-`$83=3021.013 (distBetweenMotors, mm)`:
-This is the measured distance from where the chain leaves the motor on the left to where the chain leaves the motor on the right. This was measured from the 8-o'clock position of the left sprocket to the 4-o'clock position on the right sprocket - at the center of the chain connecting pin.
+`$83=3021.013 (distBetweenMotors, mm)`: This is the measured distance from where the chain leaves the motor on the left to where the chain leaves the motor on the right. This was measured from the 8-o'clock position of the left sprocket to the 4-o'clock position on the right sprocket - at the center of the chain connecting pin.
 
 ![Distance Between Motors Measurement](https://imgur.com/pplOCz5.png)
 
-`$84=577.850 (motorOffsetY, mm)`:
-This is the distance perpendicular and down from a line that would exist between the two chain-exit sprocket positions in parameter `$83` to the top edge of the work surface.
+`$84=577.850 (motorOffsetY, mm)`: This is the distance perpendicular and down from a line that would exist between the two chain-exit sprocket positions in parameter `$83` to the top edge of the work surface.
 
-`$85=1.004 (XcorrScaling)`:
-For better overall accuracy, a test pattern can be cut and measured and a general scaling correction factor (%) can be applied to the X-axis. It is best to use a reference on the order of 1M or more in length.
+`$85=1.004 (XcorrScaling)`: For better overall accuracy, a test pattern can be cut and measured and a general scaling correction factor (%) can be applied to the X-axis. It is best to use a reference on the order of 1M or more in length.
 
-`$86=0.998 (YcorrScaling)`:
-For better overall accuracy, a test pattern can be cut and measured and a general scaling correction factor (%) can be applied to the Y-axis. It is best to use a reference on the order of 1M in height.
+`$86=0.998 (YcorrScaling)`: For better overall accuracy, a test pattern can be cut and measured and a general scaling correction factor (%) can be applied to the Y-axis. It is best to use a reference on the order of 1M in height.
 
 ### Machine Home  (`$HOME`, `$H`)
 The MaslowDue firmware assumes that machine home is in the center of the work surface, and it is `0,0,0`.  To set machine home, the sled can be placed near the center -- adjusting the chains manually, and the **bCNC ->Home** button pressed (or the `$h` GRBL command can be issued.) Once the `$HOME` has been applied, jogging and homing repeatedly is okay. This is now the machine home. If you wish to work in a different area of the table, jog the sled to wherever the desired `0,0,0` for the part is to be located and apply a work offset. If `$HOME` is used instead, the machine calibration will be off. So, consider `$HOME` to be the calibrated origin for the machine. The machine's current positions are saved to EEPROM, but it is good to periodically check and reset `$HOME` to maintain the best possible accuracy,
@@ -75,7 +72,8 @@ $101=127.775 (y, step/mm)
 $102=735.000 (z, step/mm)
 ```
 These parameters make the conversion from encoder-counts to mm in the DUE configuration.
-**Note**: _if the direction of a motor needs to be reversed, the position increments and decrements must be reversed in the `stepper.c`:_
+
+**Note:** _if the direction of a motor needs to be reversed, the position increments and decrements must be reversed in the `stepper.c`:_
 ```c
 void timer4_handler(void) routine
 
@@ -127,6 +125,7 @@ $63=5000 (Z-axis Imax)
 # Maslow-Due Shield Board
 
 There is not yet a shield board for this solution package, but if there was, it might look like this:
+
 ![MaslowDue Shield Board Top View](https://imgur.com/fsS9ltB.png)
 
 ![MaslowDue Shield Board Bottom View](https://imgur.com/XNs0gSp.png)
