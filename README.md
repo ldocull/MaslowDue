@@ -34,7 +34,7 @@ The electronics which powers the Maslow-Due CNC Machine System is based on the o
 Modifications can be made using a prototype shield like the [RobotDyn - Mega Protoshield Prototype Shield for Arduino Mega 2560](https://smile.amazon.com/RobotDyn-Protoshield-Prototype-breadboard-Assembled/dp/B071JDRGGR/ref=sr_1_3?keywords=mega%202560%20proto%20shield&qid=1552842751&s=gateway&sr=8-3).  This prevents any cutting or patching made directly to the Maslow Motor Shield or the Arduino Due.
 
 # User Interface
-The Maslow Due system uses [GRBL](https://github.com/gnea/grbl) at its core therefore, any GRBL sender application will work with the Maslow Due firmware.  The default data rate is 38400 and mode is `GRBL0`.
+The Maslow Due system uses [GRBL](https://github.com/gnea/grbl) at its core therefore, any GRBL sender application will work with the Maslow Due firmware.  The default data rate is 38400 and mode is `GRBL1`.
 
 The sender application, [bCNC](https://github.com/vlachoudis/bCNC) has been used with great success.
 

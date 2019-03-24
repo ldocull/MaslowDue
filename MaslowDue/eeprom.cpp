@@ -203,29 +203,29 @@ int memcpy_from_eeprom_with_checksum(char *destination, unsigned int source, uns
 
 void store_current_machine_pos(void)
 {
-   memcpy_to_eeprom_with_checksum(EEPROM_ADDR_MACHINE_STATE+0x10,(char *)sys.position,sizeof(sys.position));
+   memcpy_to_eeprom_with_checksum(EEPROM_ADDR_MACHINE_STATE+0x10,(char *)sys_position,sizeof(sys_position));
    memcpy_to_eeprom_with_checksum(EEPROM_ADDR_MACHINE_STATE+0x40,(char *)pl.position,sizeof(pl.position));
    memcpy_to_eeprom_with_checksum(EEPROM_ADDR_MACHINE_STATE+0x80,(char *)gc_state.coord_system,sizeof(gc_state.coord_system));
    memcpy_to_eeprom_with_checksum(EEPROM_ADDR_MACHINE_STATE+0x100,(char *)gc_state.coord_offset,sizeof(gc_state.coord_offset));
    memcpy_to_eeprom_with_checksum(EEPROM_ADDR_MACHINE_STATE+0x180,(char *)&gc_state.tool_length_offset,sizeof(gc_state.tool_length_offset));
-   DEBUG_COM_PORT.print("MPOS SAVED\n");
+//   DEBUG_COM_PORT.print("MPOS SAVED\n");
 }
 
 void recall_current_machine_pos(void)
 {
-   if(eeprom_get_char(EEPROM_ADDR_MACHINE_STATE) != 0x55) // test tag and init if not tagged
+   if(eeprom_get_char(EEPROM_ADDR_MACHINE_STATE) != 0xA5) // test tag and init if not tagged
    {
       for(int i=0; i<0x200; i++)
         eeprom_put_char(EEPROM_ADDR_MACHINE_STATE+i,0x00);
-      eeprom_put_char(EEPROM_ADDR_MACHINE_STATE,0x55);      
+      eeprom_put_char(EEPROM_ADDR_MACHINE_STATE,0xA5);      
       DEBUG_COM_PORT.print("EEMS Init\n");  
    }
-   memcpy_from_eeprom_with_checksum((char *)sys.position,EEPROM_ADDR_MACHINE_STATE+0x10,sizeof(sys.position));
+   memcpy_from_eeprom_with_checksum((char *)sys_position,EEPROM_ADDR_MACHINE_STATE+0x10,sizeof(sys_position));
    memcpy_from_eeprom_with_checksum((char *)pl.position,EEPROM_ADDR_MACHINE_STATE+0x40,sizeof(pl.position));
    memcpy_from_eeprom_with_checksum((char *)gc_state.coord_system,EEPROM_ADDR_MACHINE_STATE+0x80,sizeof(gc_state.coord_system));
    memcpy_from_eeprom_with_checksum((char *)gc_state.coord_offset,EEPROM_ADDR_MACHINE_STATE+0x100,sizeof(gc_state.coord_offset));
    memcpy_from_eeprom_with_checksum((char *)&gc_state.tool_length_offset,EEPROM_ADDR_MACHINE_STATE+0x180,sizeof(gc_state.tool_length_offset));
-   DEBUG_COM_PORT.print("MPOS RECALLED\n");
+//   DEBUG_COM_PORT.print("MPOS RECALLED\n");
 }
 
 

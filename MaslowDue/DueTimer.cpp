@@ -11,7 +11,7 @@
 #include <Arduino.h>
 #if defined(_SAM3XA_)
 #include "DueTimer.h"
-
+ 
 const DueTimer::Timer DueTimer::Timers[NUM_TIMERS] = {
 	{TC0,0,TC0_IRQn},
 	{TC0,1,TC1_IRQn},

@@ -50,6 +50,20 @@ struct PID_MOTION y_axis = {default_yKp,default_yKi,default_yImax,default_yKd,0,
 struct PID_MOTION z_axis = {default_zKp,default_zKi,default_zImax,default_zKd,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 struct PID_MOTION *selected_axis;
 
+// Declare system global variable structure
+system_t sys;
+int32_t sys_position[N_AXIS];      // Real-time machine (aka home) position vector in steps.
+int32_t sys_probe_position[N_AXIS]; // Last probe position in machine coordinates and steps.
+volatile uint8_t sys_probe_state;   // Probing state value.  Used to coordinate the probing cycle with stepper ISR.
+volatile uint8_t sys_rt_exec_state;   // Global realtime executor bitflag variable for state management. See EXEC bitmasks.
+volatile uint8_t sys_rt_exec_alarm;   // Global realtime executor bitflag variable for setting various alarms.
+volatile uint8_t sys_rt_exec_motion_override; // Global realtime executor bitflag variable for motion-based overrides.
+volatile uint8_t sys_rt_exec_accessory_override; // Global realtime executor bitflag variable for spindle/coolant overrides.
+#ifdef DEBUG
+  volatile uint8_t sys_rt_exec_debug;
+#endif
+
+
 long int xSpeed, ySpeed, zSpeed;  // current speed each axis
 int lastXAstate,lastXBstate,lastYAstate,lastYBstate,lastZAstate,lastZBstate;
 
@@ -130,7 +144,7 @@ void motorsDisabled(void)
   digitalWrite(X_ENABLE, 0);  // disable the motor driver
   digitalWrite(Y_ENABLE, 0);  
   digitalWrite(Z_ENABLE, 0);
-  DEBUG_COM_PORT.print("MOTORS OFF\n");
+//  DEBUG_COM_PORT.print("MOTORS OFF\n");
 }
 
 void motorsEnabled(void)
@@ -138,7 +152,7 @@ void motorsEnabled(void)
   digitalWrite(X_ENABLE, 1);  // Enable the motor driver
   digitalWrite(Y_ENABLE, 1);
   digitalWrite(Z_ENABLE, 1);
-  DEBUG_COM_PORT.print("MOTORS ON\n");
+//  DEBUG_COM_PORT.print("MOTORS ON\n");
 }
 
 void MotorPID_Timer_handler(void)  // PID interrupt service routine 
@@ -165,9 +179,9 @@ void MotorPID_Timer_handler(void)  // PID interrupt service routine
     }
   #endif
 
-   #ifndef VARIABLE_SPINDLE
-    serialScanner_handler(); // work the serial buffer pre-parser from this timer!
-   #endif
+  //  #ifndef VARIABLE_SPINDLE
+  //   serialScanner_handler(); // work the serial buffer pre-parser from this timer!
+  //  #endif
    
     digitalWrite(HeartBeatLED, healthLEDcounter++ & 0x40);
 }
@@ -400,7 +414,9 @@ void setup()
   stepper_init();  // Configure stepper pins and interrupt timers
   system_init();   // Configure pinout pins and pin-change interrupt
 
+  extern system_t sys;
   memset(&sys, 0, sizeof(system_t));  // Clear all system variables
+  memset(sys_position,0,sizeof(sys_position)); // Clear machine position.
   sys.abort = true;   // Set abort to complete initialization
 
   interrupts();               // enable all interrupts
@@ -430,7 +446,7 @@ void setup()
     // Start Grbl main loop. Processes program inputs and executes them.
    protocol_init();
 #else
-    motorsEnabled();
+   motorsEnabled();  // for tuning loop
 #endif
 }
 

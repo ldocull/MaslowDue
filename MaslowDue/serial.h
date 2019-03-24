@@ -2,7 +2,7 @@
   serial.c - Low level functions for sending and recieving bytes via the serial port
   Part of Grbl
 
-  Copyright (c) 2011-2015 Sungeun K. Jeon
+  Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
 
   Grbl is free software: you can redistribute it and/or modify
@@ -22,28 +22,16 @@
 #ifndef serial_h
 #define serial_h
 
-#include <Arduino.h>
-
 
 #ifndef RX_BUFFER_SIZE
-  #define RX_BUFFER_SIZE SERIAL_BUFFER_SIZE
+  #define RX_BUFFER_SIZE 255
 #endif
 #ifndef TX_BUFFER_SIZE
-  #define TX_BUFFER_SIZE SERIAL_BUFFER_SIZE
+  #define TX_BUFFER_SIZE 255
 #endif
 
 #define SERIAL_NO_DATA 0xff
 
-#ifdef ENABLE_XONXOFF
-  #define RX_BUFFER_FULL (SERIAL_BUFFER_SIZE*0.8) // XOFF high watermark
-  #define RX_BUFFER_LOW (SERIAL_BUFFER_SIZE*0.2) // XON low watermark
-  #define SEND_XOFF 1
-  #define SEND_XON 2
-  #define XOFF_SENT 3
-  #define XON_SENT 4
-  #define XOFF_CHAR 0x13
-  #define XON_CHAR 0x11
-#endif
 
 void serial_init();
 
@@ -56,7 +44,11 @@ uint8_t serial_read();
 // Reset and empty data in read buffer. Used by e-stop and reset.
 void serial_reset_read_buffer();
 
+// Returns the number of bytes available in the RX serial buffer.
+uint8_t serial_get_rx_buffer_available();
+
 // Returns the number of bytes used in the RX serial buffer.
+// NOTE: Deprecated. Not used unless classic status reports are enabled in config.h.
 uint8_t serial_get_rx_buffer_count();
 
 // Returns the number of bytes used in the TX serial buffer.

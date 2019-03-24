@@ -1,9 +1,8 @@
 /*
-  limits.h - code pertaining to limit-switches and performing the homing cycle
+  sleep.h - Sleep methods header file
   Part of Grbl
-
-  Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c) 2009-2011 Simen Svale Skogsrud
+  
+  Copyright (c) 2016 Sungeun K. Jeon  
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,23 +18,17 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef limits_h
-#define limits_h
+#ifndef sleep_h
+#define sleep_h
+
+#include "grbl.h"
 
 
-// Initialize the limits module
-void limits_init();
+// Initialize sleep timer
+void sleep_init();
 
-// Disables hard limits.
-void limits_disable();
-
-// Returns limit state as a bit-wise uint8 variable.
-uint8_t limits_get_state();
-
-// Perform one portion of the homing cycle based on the input settings.
-void limits_go_home(uint8_t cycle_mask);
-
-// Check for soft limit violations
-void limits_soft_check(float *target);
+// Checks running conditions for sleep. If satisfied, enables sleep countdown and executes
+// sleep mode upon elapse.
+void sleep_check();
 
 #endif

@@ -22,11 +22,6 @@
 #ifndef maslow_h
 #define maslow_h
 
-// Maslow Firmware Version tracking
-#define VERSIONNUMBER 1.99
-
-// Define standard libraries used by maslow.
-
 // HARDWARE PIN MAPPING
 #define HeartBeatLED 13
 #define YP_PWM 6      /* Y-axis positive direction PWM output */
@@ -63,44 +58,6 @@
 #define MAX_PWM_LEVEL 255
 #define MIN_PWM_LEVEL 5
 
-// PID position loop factors              X: Kp = 25000 Ki = 15000 Kd = 22000 Imax = 5000
-// 14.000 fixed point arithmatic S13.10
-#define default_xKp     (25.000*1024)
-#define default_xKi     (17.000*1024)
-#define default_xImax   (5000)
-#define default_xKd     (21.000*1024)
-
-#define default_yKp     (25.000*1024)
-#define default_yKi     (17.000*1024)
-#define default_yImax   (5000)
-#define default_yKd     (21.000*1024)
-
-#define default_zKp     (22.000*1024)
-#define default_zKi     (17.000*1024)
-#define default_zImax   (5000)
-#define default_zKd     (20.000*1024)
-
-//#define default_yKp     (5.000*1024)  /* Small test motor setup */
-//#define default_yKi     (4.000*1024)
-//#define default_yImax   (5000)
-//#define default_yKd     (8.000*1024)
-
-#ifdef MASLOWCNC
-  #define default_machineWidth        (96*25.4)
-  #define default_machineHeight       (48*25.4)
-  #define default_distBetweenMotors   (118.9375*25.4)
-  #define default_motorOffsetY        (22.75*25.4)
-  #define default_chainLength         (132.283*25.4)
-  #define default_chainOverSprocket   (0)
-  #define default_chainSagCorrection  (59.504839)
-  #define default_leftChainTolerance  (0)
-  #define default_rightChainTolerance (0)
-  #define default_rotationDiskRadius  (104.3)
-  #define default_sledHeight          (139)
-  #define default_sledWidth           (310)
-  #define default_XcorrScaling        (1.003922)
-  #define default_YcorrScaling        (0.998440)
-#endif
   
 struct PID_MOTION 
 {
