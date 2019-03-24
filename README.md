@@ -25,7 +25,7 @@ First clone the Firmware repository, then install and setup the Arduino IDE.
 # Maslow-Due Electronics
 The electronics which powers the Maslow-Due CNC Machine System is based on the original Maslow-CNC shield board. The Maslow-Due (DUE) requires that the Arduino Mega2560 board (standard to the MaslowCNC) be upgraded to an Arduino Due. Since the DUE runs at a lower power supply voltage (3.3V instead of 5V) shunt resistors, in parallel with each motor phase, are required to provide safe operating voltages from the encoders to the I/O pins of the DUE. Additional filter caps are also required to prevent positioning errors from noise spikes on the encoder cables. An **EEPROM must** be added to store the non-volatile parameters (the firmware will not work without it).
 
-![Circuit Adaptations](https://i.imgur.com/yb33BBk.png)
+![Circuit Adaptations](https://imgur.com/GCqeNKl.png)
 
 **Note:** _the board ID pins in the lower-left corner of the motor shield should be removed or not allowed to pass 5V to the Arduino Due. Cutting the trace as shown below also stops the 5V from getting back to the I/O pins:_
 
