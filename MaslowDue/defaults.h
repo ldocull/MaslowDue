@@ -37,7 +37,7 @@
 
   #define DEFAULT_X_STEPS_PER_MM (8113.7/63.5)	// 8113.7 ppr & 63.5mm/rev
   #define DEFAULT_Y_STEPS_PER_MM (8113.7/63.5)	// 8113.7 ppr & 63.5mm/rev
-  #define DEFAULT_Z_STEPS_PER_MM ((168*28)/2/3.2)	// 168:1 gear * 28 ppr encoder / 2mm per rev
+  #define DEFAULT_Z_STEPS_PER_MM ((168*28)/5.12)	// 168:1 gear * 28 ppr encoder / 2mm per rev
   #define DEFAULT_X_MAX_RATE 1000.0 // mm/min
   #define DEFAULT_Y_MAX_RATE 1000.0 // mm/min
   #define DEFAULT_Z_MAX_RATE 250.0 // mm/min
@@ -100,7 +100,7 @@
   #define default_sledHeight          (139)
   #define default_sledWidth           (310)
   #define default_XcorrScaling        (1.003922)
-  #define default_YcorrScaling        (0.998440)
+  #define default_YcorrScaling        (1.002611)
 
 #endif
 
