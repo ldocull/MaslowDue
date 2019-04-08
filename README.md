@@ -37,7 +37,7 @@ The TLE5206-based boards require the same attention to 5V ingress. There are 3 p
 
 Modifications can be made using a prototype shield like the [RobotDyn - Mega Protoshield Prototype Shield for Arduino Mega 2560](https://smile.amazon.com/RobotDyn-Protoshield-Prototype-breadboard-Assembled/dp/B071JDRGGR/ref=sr_1_3?keywords=mega%202560%20proto%20shield&qid=1552842751&s=gateway&sr=8-3).  This prevents any cutting or patching made directly to the Maslow Motor Shield or the Arduino Due.
 
-Both L298 and TLE5206 type shields are supported by the firmware. The shield can be selected by un-commenting one of the below listed board-types in ***MaslowDue.h*** file:
+Both L298 and TLE5206 type shields are supported by the firmware. The shield can be selected by un-commenting one of the below listed board-types in the ***MaslowDue.h*** file:
 ```
 #define DRIVER_L298P_12    /* Uncomment this for a L298P version 1.2 Shield */
 //#define DRIVER_L298P_11    /* Uncomment this for a L298P version 1.1 Shield */
