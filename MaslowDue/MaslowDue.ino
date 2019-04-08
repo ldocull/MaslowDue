@@ -34,8 +34,6 @@
 #include "grbl.h"
 #include "DueTimer.h"
 
-//#define TUNING_MODE 1
-
 int incomingByte = 0;
 int healthLEDcounter = 0;
 
@@ -45,10 +43,11 @@ int posEnabled = 1;            // positioning enable for tuning tool
 char which_axis = 'X';         // selected axis indicator
 #endif
 
+struct PID_MOTION *selected_axis;
+
 struct PID_MOTION x_axis = {default_xKp,default_xKi,default_xImax,default_xKd,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 struct PID_MOTION y_axis = {default_yKp,default_yKi,default_yImax,default_yKd,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 struct PID_MOTION z_axis = {default_zKp,default_zKi,default_zImax,default_zKd,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-struct PID_MOTION *selected_axis;
 
 // Declare system global variable structure
 system_t sys;
@@ -63,6 +62,8 @@ volatile uint8_t sys_rt_exec_accessory_override; // Global realtime executor bit
   volatile uint8_t sys_rt_exec_debug;
 #endif
 
+int fault_was_low = 0;
+int Motors_Disabled = 0;
 
 long int xSpeed, ySpeed, zSpeed;  // current speed each axis
 int lastXAstate,lastXBstate,lastYAstate,lastYBstate,lastZAstate,lastZBstate;
@@ -93,6 +94,7 @@ long compute_PID(struct PID_MOTION *axis_ptr)
 {
   int sign;
   long Speed;
+  int PWM_value;
   
   axis_ptr->Speed = ((axis_ptr->Kp) * axis_ptr->Error);    // proportional term..
   
@@ -102,7 +104,6 @@ long compute_PID(struct PID_MOTION *axis_ptr)
   axis_ptr->iterm = (axis_ptr->Ki) * axis_ptr->Integral;    // integral term..
   axis_ptr->Speed += axis_ptr->iterm >> 3;
 
-  
   axis_ptr->DiffTerm = (axis_ptr->last_Position - axis_ptr->axis_Position);
   axis_ptr->last_Position = axis_ptr->axis_Position;       // differential term..
   axis_ptr->Speed += ((axis_ptr->Kd) * axis_ptr->DiffTerm);
@@ -115,25 +116,42 @@ long compute_PID(struct PID_MOTION *axis_ptr)
   Speed = abs(Speed); // make a magnitude
   Speed += 128;  // round in the fraction..  ie V=101720 CMD=101 (102)
   Speed >>= 10;  // Scale out, but leave the fraction!
-
-  if(Speed > MAX_PWM_LEVEL) Speed = MAX_PWM_LEVEL;  // PWM limiter
-#if (MIN_PWM_LEVEL > 0)
-  if(Speed < MIN_PWM_LEVEL) Speed = MIN_PWM_LEVEL;  // PWM limiter
-#endif
+  
+  PWM_value = (int) Speed;
+  if(PWM_value > MAX_PWM_LEVEL) PWM_value = MAX_PWM_LEVEL;  // PWM limiter
+  #if (MIN_PWM_LEVEL > 0)
+    if(PWM_value < MIN_PWM_LEVEL) PWM_value = MIN_PWM_LEVEL;  // PWM limiter
+  #endif
 
  #ifdef TUNING_MODE
   if(!posEnabled) Speed = 0;   // all stop (forced)
  #endif 
- 
+
   if(sign > 0)
   {
-    analogWrite(axis_ptr->M_PWM, 0);       // spin Positive
-    analogWrite(axis_ptr->P_PWM, Speed);
+  #ifdef DRIVER_TLE5206
+      digitalWrite(axis_ptr->M_PWM, 1);       // spin Positive
+      if(Motors_Disabled)
+        digitalWrite(axis_ptr->P_PWM, 1);
+      else
+        analogWrite(axis_ptr->P_PWM, (255-PWM_value));
+  #else
+      analogWrite(axis_ptr->M_PWM, 0);       // spin Positive
+      analogWrite(axis_ptr->P_PWM, PWM_value);
+  #endif
   }
   else
   {
-    analogWrite(axis_ptr->M_PWM, Speed);   // spin Negative
-    analogWrite(axis_ptr->P_PWM, 0);
+   #ifdef DRIVER_TLE5206
+      digitalWrite(axis_ptr->P_PWM, 1);       // spin Negative
+      if(Motors_Disabled)
+        digitalWrite(axis_ptr->M_PWM, 1);
+      else
+      analogWrite(axis_ptr->M_PWM, (255-PWM_value));
+   #else
+      analogWrite(axis_ptr->P_PWM, 0);       // spin Negative
+      analogWrite(axis_ptr->M_PWM, PWM_value);
+   #endif
   }
   
   return(axis_ptr->Speed);
@@ -141,17 +159,23 @@ long compute_PID(struct PID_MOTION *axis_ptr)
 
 void motorsDisabled(void)
 {
-  digitalWrite(X_ENABLE, 0);  // disable the motor driver
-  digitalWrite(Y_ENABLE, 0);  
-  digitalWrite(Z_ENABLE, 0);
+    Motors_Disabled = 1;
+  #ifndef DRIVER_TLE5206
+    digitalWrite(X_ENABLE, 0);  // disable the motor driver
+    digitalWrite(Y_ENABLE, 0);  
+    digitalWrite(Z_ENABLE, 0);
+  #endif
 //  DEBUG_COM_PORT.print("MOTORS OFF\n");
 }
 
 void motorsEnabled(void)
 {
-  digitalWrite(X_ENABLE, 1);  // Enable the motor driver
-  digitalWrite(Y_ENABLE, 1);
-  digitalWrite(Z_ENABLE, 1);
+    Motors_Disabled = 0;
+  #ifndef DRIVER_TLE5206
+    digitalWrite(X_ENABLE, 1);  // Enable the motor driver
+    digitalWrite(Y_ENABLE, 1);
+    digitalWrite(Z_ENABLE, 1);  
+  #endif
 //  DEBUG_COM_PORT.print("MOTORS ON\n");
 }
 
@@ -162,7 +186,7 @@ void MotorPID_Timer_handler(void)  // PID interrupt service routine
     z_axis.Error = z_axis.target - z_axis.axis_Position; // current position error
   
     interrupts();  // reenable interrupts so encoder pulses will all be counted!!
-  
+
     xSpeed = compute_PID(&x_axis);
     ySpeed = compute_PID(&y_axis);
     zSpeed = compute_PID(&z_axis);
@@ -332,53 +356,65 @@ void setup()
 
   pinMode(XP_PWM, OUTPUT);
   pinMode(XM_PWM, OUTPUT);
-  analogWrite(XP_PWM, 0);
-  analogWrite(XM_PWM, 0);
-  pinMode(X_ENABLE, OUTPUT);
   pinMode(Encoder_XA, INPUT_PULLUP);
   pinMode(Encoder_XB, INPUT_PULLUP);
   x_axis.P_PWM = XP_PWM;  // preload hardware abstraction
   x_axis.M_PWM = XM_PWM;
-  x_axis.ENABLE = X_ENABLE;
+  #ifdef DRIVER_TLE5206
+    digitalWrite(X_FAULT,1);    // setup fault lines..
+    pinMode(X_FAULT,INPUT);
+    analogWrite(XP_PWM,255);
+    analogWrite(XM_PWM,255);
+    x_axis.ENABLE = X_FAULT;
+  #else
+    analogWrite(XP_PWM, 0);
+    analogWrite(XM_PWM, 0);
+    pinMode(X_ENABLE, OUTPUT);
+    x_axis.ENABLE = X_ENABLE;
+  #endif
 
   pinMode(YP_PWM, OUTPUT);
   pinMode(YM_PWM, OUTPUT);
-  analogWrite(YP_PWM, 0);
-  analogWrite(YM_PWM, 0);
-  pinMode(Y_ENABLE, OUTPUT);
   pinMode(Encoder_YA, INPUT_PULLUP);
   pinMode(Encoder_YB, INPUT_PULLUP);
   y_axis.P_PWM = YP_PWM;
   y_axis.M_PWM = YM_PWM;
-  y_axis.ENABLE = Y_ENABLE;
+  #ifdef DRIVER_TLE5206
+    digitalWrite(Y_FAULT,1);
+    pinMode(Y_FAULT,INPUT);
+    analogWrite(YP_PWM,255);
+    analogWrite(YM_PWM,255);
+    y_axis.ENABLE = Y_FAULT;
+  #else
+    analogWrite(YP_PWM, 0);
+    analogWrite(YM_PWM, 0);
+    pinMode(Y_ENABLE, OUTPUT);
+    y_axis.ENABLE = Y_ENABLE;
+  #endif
 
   pinMode(ZP_PWM, OUTPUT);
   pinMode(ZM_PWM, OUTPUT);
-  analogWrite(ZP_PWM, 0);
-  analogWrite(ZM_PWM, 0);
-  pinMode(Z_ENABLE, OUTPUT);
   pinMode(Encoder_ZA, INPUT_PULLUP);
   pinMode(Encoder_ZB, INPUT_PULLUP);
   z_axis.P_PWM = ZP_PWM;
   z_axis.M_PWM = ZM_PWM;
-  z_axis.ENABLE = Z_ENABLE;
+  #ifdef DRIVER_TLE5206
+    digitalWrite(Z_FAULT,1);
+    pinMode(Z_FAULT,INPUT);
+    analogWrite(ZP_PWM,255);
+    analogWrite(ZM_PWM,255);
+    z_axis.ENABLE = Z_FAULT;
+  #else
+    analogWrite(ZP_PWM, 0);
+    analogWrite(ZM_PWM, 0);
+    pinMode(Z_ENABLE, OUTPUT);
+    z_axis.ENABLE = Z_ENABLE;
+  #endif
 
   pinMode(Spindle_PWM, OUTPUT);
   digitalWrite(Spindle_PWM, 0);
   
   motorsDisabled();
-
-// Pin Mode for use with external GBRL or Linux CNC (Inputs)
-//  pinMode(X_STEP,INPUT_PULLUP);
-//  pinMode(X_DIRECTION,INPUT_PULLUP);
-//  pinMode(Y_STEP,INPUT_PULLUP);
-//  pinMode(Y_DIRECTION,INPUT_PULLUP);
-//  pinMode(Z_STEP,INPUT_PULLUP);
-//  pinMode(Z_DIRECTION,INPUT_PULLUP);
-//  install interrupt on change for step-direction inputs from GRBL or Linux CNC
-//  attachInterrupt(digitalPinToInterrupt(X_STEP), GRBL_x_step,RISING);   // X-Step
-//  attachInterrupt(digitalPinToInterrupt(Y_STEP), GRBL_y_step,RISING);   // Y-Step
-//  attachInterrupt(digitalPinToInterrupt(Z_STEP), GRBL_z_step,RISING);   // Z-Step
 
     // initialize hard-time MotorPID_Timer for servos (10ms loop)
   Timer5.attachInterrupt(MotorPID_Timer_handler).setPeriod(10000).start(); 
@@ -399,17 +435,30 @@ void setup()
   x_axis.Ki = settings.x_PID_Ki;
   x_axis.Kd = settings.x_PID_Kd;
   x_axis.Imax = settings.x_PID_Imax;
-  selected_axis = &x_axis;    // default select axis for diagnostics
+  x_axis.axis_Position = 0;
+  x_axis.target = 0;
+  x_axis.target_PS = 0;
+  x_axis.Integral = 0;
 
   y_axis.Kp = settings.y_PID_Kp; // get loop values from storage
   y_axis.Ki = settings.y_PID_Ki;
   y_axis.Kd = settings.y_PID_Kd;
   y_axis.Imax = settings.y_PID_Imax;
+  y_axis.axis_Position = 0;
+  y_axis.target = 0;
+  y_axis.target_PS = 0;
+  y_axis.Integral = 0;
 
   z_axis.Kp = settings.z_PID_Kp; // get loop values from storage
   z_axis.Ki = settings.z_PID_Ki;
   z_axis.Kd = settings.z_PID_Kd;
   z_axis.Imax = settings.z_PID_Imax;  
+  z_axis.axis_Position = 0;
+  z_axis.target = 0;
+  z_axis.target_PS = 0;
+  z_axis.Integral = 0;
+
+  selected_axis = &x_axis;    // default select axis for diagnostics
 
   stepper_init();  // Configure stepper pins and interrupt timers
   system_init();   // Configure pinout pins and pin-change interrupt
@@ -426,6 +475,7 @@ void setup()
     DEBUG_COM_PORT.print("DEBUG\n");
   #endif
   
+
 #ifndef TUNING_MODE
   // Check for power-up and set system alarm if homing is enabled to force homing cycle
   // by setting Grbl's alarm state. Alarm locks out all g-code commands, including the

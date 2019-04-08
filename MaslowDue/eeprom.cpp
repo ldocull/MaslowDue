@@ -320,6 +320,13 @@ void EEPROM_viewer(void)
           MACHINE_COM_PORT.print("\n");
           break;
 
+        case 'z':
+          MACHINE_COM_PORT.print("ERASE ALL..\n");     
+          for( int i = 0; i<EEPROM_END_ROM; i++)
+            eeprom_put_char(i,0xFF); 
+          MACHINE_COM_PORT.print("Done!");     
+          break;          
+
         case 'd':
           addr = serial_parseHexInt(); // dump block from address   
         case ' ':     

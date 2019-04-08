@@ -32,6 +32,7 @@
 
 #ifdef DEFAULTS_MASLOWCNC
 
+  #include "MaslowDue.h"
   // Grbl-Maslow default settings. Will require modification for each specific machine
   // but the values below are for the MaslowCNC kit motors and a z-axis kit w/ a Meticulous-Z sled setup.
 
@@ -72,20 +73,37 @@
 
   // PID position loop factors              X: Kp = 25000 Ki = 15000 Kd = 22000 Imax = 5000
   // 14.000 fixed point arithmatic S13.10
-  #define default_xKp     (25.000*1024)
-  #define default_xKi     (17.000*1024)
-  #define default_xImax   (5000)
-  #define default_xKd     (21.000*1024)
+  #ifdef DRIVER_TLE5206
+    #define default_xKp     (10.000*1024)
+    #define default_xKi     (21.000*1024)
+    #define default_xImax   (5000)
+    #define default_xKd     (18.000*1024)
 
-  #define default_yKp     (25.000*1024)
-  #define default_yKi     (17.000*1024)
-  #define default_yImax   (5000)
-  #define default_yKd     (21.000*1024)
+    #define default_yKp     (10.000*1024)
+    #define default_yKi     (21.000*1024)
+    #define default_yImax   (5000)
+    #define default_yKd     (18.000*1024)
 
-  #define default_zKp     (22.000*1024)
-  #define default_zKi     (17.000*1024)
-  #define default_zImax   (5000)
-  #define default_zKd     (20.000*1024)
+    #define default_zKp     (10.000*1024)
+    #define default_zKi     (21.000*1024)
+    #define default_zImax   (5000)
+    #define default_zKd     (17.000*1024)
+  #else
+    #define default_xKp     (22.000*1024)
+    #define default_xKi     (17.000*1024)
+    #define default_xImax   (5000)
+    #define default_xKd     (20.000*1024)
+
+    #define default_yKp     (22.000*1024)
+    #define default_yKi     (17.000*1024)
+    #define default_yImax   (5000)
+    #define default_yKd     (20.000*1024)
+
+    #define default_zKp     (20.000*1024)
+    #define default_zKi     (17.000*1024)
+    #define default_zImax   (5000)
+    #define default_zKd     (18.000*1024)
+  #endif
 
   #define default_machineWidth        (96*25.4)
   #define default_machineHeight       (48*25.4)

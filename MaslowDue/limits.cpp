@@ -22,7 +22,7 @@
 */
   
 #include "grbl.h"
-
+#include "MaslowDue.h"
 
 // Homing axis search distance multiplier. Computed by this value times the cycle travel.
 #ifndef HOMING_AXIS_SEARCH_SCALAR
@@ -558,11 +558,25 @@ void limits_go_home(uint8_t cycle_mask)
               float aCl,bCl;    // set initial chain lengths to table center when $HOME
               void triangularInverse(float ,float , float* , float* );
 
+              x_axis.axis_Position = 0;
+              x_axis.target = 0;
+              x_axis.target_PS = 0;
+              x_axis.Integral = 0;
+              y_axis.axis_Position = 0;
+              y_axis.target = 0;
+              y_axis.target_PS = 0;
+              y_axis.Integral = 0;
+              z_axis.axis_Position = 0;
+              z_axis.target = 0;
+              z_axis.target_PS = 0;
+              z_axis.Integral = 0;
               set_axis_position = 0;    // force to center of table -- its a Maslow thing
+              
               triangularInverse((float)(set_axis_position), (float)(set_axis_position), &aCl, &bCl);        
               sys_position[LEFT_MOTOR] = (int32_t) lround(aCl * settings.steps_per_mm[LEFT_MOTOR]);
               sys_position[RIGHT_MOTOR] = (int32_t) lround(bCl * settings.steps_per_mm[RIGHT_MOTOR]);
               sys_position[Z_AXIS] = set_axis_position;
+              
               store_current_machine_pos();    // reset all the way out to stored space
               sys.step_control = STEP_CONTROL_NORMAL_OP; // Return step control to normal operation.
               return;

@@ -30,7 +30,7 @@
   // Grbl generic default settings. Should work across different machines.
   #define DEFAULT_X_STEPS_PER_MM (8113.7/63.5)	// 8113.7 ppr & 63.5mm/rev
   #define DEFAULT_Y_STEPS_PER_MM (8113.7/63.5)	// 8113.7 ppr & 63.5mm/rev
-  #define DEFAULT_Z_STEPS_PER_MM ((168*28)/2/3.2)	// 168:1 gear * 28 ppr encoder / 2mm per rev
+  #define DEFAULT_Z_STEPS_PER_MM ((168*28)/5.12)	// 168:1 gear * 28 ppr encoder / 5.12 mm/rev
   #define DEFAULT_X_MAX_RATE 1000.0 // mm/min
   #define DEFAULT_Y_MAX_RATE 1000.0 // mm/min
   #define DEFAULT_Z_MAX_RATE 250.0 // mm/min
@@ -40,6 +40,8 @@
   #define DEFAULT_X_MAX_TRAVEL 2500.0 // mm
   #define DEFAULT_Y_MAX_TRAVEL 1250.0 // mm
   #define DEFAULT_Z_MAX_TRAVEL 25.0 // mm
+  #define DEFAULT_SPINDLE_RPM_MAX 24000.0 // rpm
+  #define DEFAULT_SPINDLE_RPM_MIN 4000.0 // rpm
   #define DEFAULT_STEP_PULSE_MICROSECONDS 10
   #define DEFAULT_STEPPING_INVERT_MASK 0
   #define DEFAULT_DIRECTION_INVERT_MASK 0

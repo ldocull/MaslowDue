@@ -31,7 +31,7 @@
   int spindle_running = 0;
 
   void serialScanner_handler(void);
-  void Spindle_Timer7_handler(void);
+  void Spindle_SPINDLE_TIMER_handler(void);
 
 #endif
 
@@ -50,7 +50,7 @@ void spindle_init()
     SPINDLE_DIRECTION_DDR |= (1<<SPINDLE_DIRECTION_BIT); // Configure as output pin.
 
   #else 
-     Timer7.attachInterrupt(Spindle_Timer7_handler).setPeriod(Spindle_PERIOD).start();
+     SPINDLE_TIMER.attachInterrupt(Spindle_SPINDLE_TIMER_handler).setPeriod(Spindle_PERIOD).start();
      spindle_running = 0;
   #endif
 
@@ -60,36 +60,36 @@ void spindle_init()
 
 #ifdef MASLOWCNC
 
-void Spindle_Timer7_handler(void)
+void Spindle_SPINDLE_TIMER_handler(void)
 {
     float high_side_time = (float)current_pwm;
 
     high_side_time /= SPINDLE_PWM_MAX_VALUE;    // percent of total time
     float low_side_time = 1 - high_side_time;
 
-    Timer7.stop();
+    SPINDLE_TIMER.stop();
     if(current_pwm != 0)
     {
       if(current_pwm >= SPINDLE_PWM_MAX_VALUE)
       {
         digitalWrite(Spindle_PWM, 1); // set output high (full speed)
-        Timer7.setPeriod((int)(Spindle_PERIOD)).start();             
+        SPINDLE_TIMER.setPeriod((int)(Spindle_PERIOD)).start();             
       }
       else if(digitalRead(Spindle_PWM))
       {
           digitalWrite(Spindle_PWM, 0); // set output low
-          Timer7.setPeriod((int)(Spindle_PERIOD * low_side_time)).start();       
+          SPINDLE_TIMER.setPeriod((int)(Spindle_PERIOD * low_side_time)).start();       
       }
       else
       {
           digitalWrite(Spindle_PWM, 1); // set output low
-          Timer7.setPeriod((int)(Spindle_PERIOD * high_side_time)).start();            
+          SPINDLE_TIMER.setPeriod((int)(Spindle_PERIOD * high_side_time)).start();            
       }    
     }
     else
     {
           digitalWrite(Spindle_PWM, 0); // set output low    
-          Timer7.setPeriod((int)(Spindle_PERIOD)).start();     
+          SPINDLE_TIMER.setPeriod((int)(Spindle_PERIOD)).start();     
     }
 
     serialScanner_handler(); // borrow this timer for serial preprocessing if available

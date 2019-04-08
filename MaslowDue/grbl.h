@@ -36,7 +36,7 @@
 
 
 #ifdef MASLOWCNC
-  #define GRBL_VERSION_BUILD "20190322.MazDue"
+  #define GRBL_VERSION_BUILD "20190407.MazDue"
   #include "Arduino.h"
 #else
   #define GRBL_VERSION_BUILD "20180813.Mega"
