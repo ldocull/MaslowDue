@@ -23,13 +23,17 @@ First clone the Firmware repository, then install and setup the Arduino IDE.
 6. Navigate menu: **Sketch -> Upload**
 
 # Maslow-Due Electronics
-The electronics which powers the Maslow-Due CNC Machine System is based on the original Maslow-CNC shield board. The Maslow-Due (DUE) requires that the Arduino Mega2560 board (standard to the MaslowCNC) be upgraded to an Arduino Due. Since the DUE runs at a lower power supply voltage (3.3V instead of 5V) shunt resistors, in parallel with each motor phase, are required to provide safe operating voltages from the encoders to the I/O pins of the DUE. Additional filter caps are also required to prevent positioning errors from noise spikes on the encoder cables. An **EEPROM must** be added to store the non-volatile parameters (the firmware will not work without it).
+The electronics which powers the Maslow-Due CNC Machine System is based on the original Maslow-CNC shield board. The Maslow-Due (DUE) requires that the Arduino Mega2560 board (standard to the MaslowCNC) be upgraded to an Arduino Due. Since the DUE runs at a lower power supply voltage (3.3V instead of 5V) **3.9K shunt resistors**, in parallel with each motor phase, **are required** to provide safe operating voltages from the encoders to the I/O pins of the DUE. Additional **0.01uF filter caps are also required** to prevent positioning errors from noise spikes on the encoder cables. An **EEPROM must be added** to store the non-volatile parameters (the firmware will not work without it).
 
 ![Circuit Adaptations](https://imgur.com/BIu1jCN.png)
 
 **Note:** _the board ID pins in the lower-left corner of the motor shield should be removed or not allowed to pass 5V to the Arduino Due. Cutting the trace as shown below also stops the 5V from getting back to the I/O pins:_
 
 ![Cut 5V trace or remove pins..](https://imgur.com/uj6fcP6.png)
+
+The TLE5206-based boards require the same attention to 5V ingress. There are 3 places that must be cut and one place where 3.3V is patched over as shown here. **Please note that all 5V cuts are important or the Due can be damaged**:
+
+![TEL5206 Shield Power Modifications](https://imgur.com/36tnS2x.png)
 
 Modifications can be made using a prototype shield like the [RobotDyn - Mega Protoshield Prototype Shield for Arduino Mega 2560](https://smile.amazon.com/RobotDyn-Protoshield-Prototype-breadboard-Assembled/dp/B071JDRGGR/ref=sr_1_3?keywords=mega%202560%20proto%20shield&qid=1552842751&s=gateway&sr=8-3).  This prevents any cutting or patching made directly to the Maslow Motor Shield or the Arduino Due.
 
