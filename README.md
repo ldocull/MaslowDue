@@ -146,6 +146,10 @@ Gerbers and Schematics can be found on this repo under [Electronics](https://git
 
 Peace!
 
+___
+Let us know that this work has been helpful to you.  Any proceeds will be used to offset expenses and further the art. 
+[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=GLAHSMYYJJJAU&source=url)
+
 ### Authors
 - Larry O'Cull ([ldocull](https://github.com/ldocull), Father)
 - Max O'Cull ([maxattax97](https://github.com/maxattax97), Son)
