@@ -745,6 +745,8 @@ void st_reset()
       STEP_PORT = (STEP_PORT & ~STEP_MASK) | step_port_invert_mask;
       DIRECTION_PORT = (DIRECTION_PORT & ~DIRECTION_MASK) | dir_port_invert_mask;
     #endif // Ramps Board
+  #else
+      st.dir_outbits = dir_port_invert_mask; // Initialize direction bits to default
   #endif
 }
 
