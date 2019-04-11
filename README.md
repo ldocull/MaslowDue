@@ -85,30 +85,13 @@ $102=735.000 (z, step/mm)
 ```
 These parameters make the conversion from encoder-counts to mm in the DUE configuration.
 
-**Note:** _if the direction of a motor needs to be reversed, the position increments and decrements must be reversed in the `stepper.c`:_
-```c
-void timer4_handler(void) routine
-
-...
-
- if ((st.step_outbits & (1 << X_STEP_BIT)) && (st.dir_outbits & (1 << X_DIRECTION_BIT)) == 0)
-    x_axis.target++;
-  else if ((st.step_outbits & (1 << X_STEP_BIT)) && (st.dir_outbits & (1 << X_DIRECTION_BIT)))
-    x_axis.target--;
-
-// REVERSED the 'Right Motor'
-  if ((st.step_outbits & (1 << Y_STEP_BIT)) && (st.dir_outbits & (1 << Y_DIRECTION_BIT)) == 0)
-    y_axis.target--;  //=== !!
-  else if ((st.step_outbits & (1 << Y_STEP_BIT)) && (st.dir_outbits & (1 << Y_DIRECTION_BIT)))
-    y_axis.target++;  //=== !!
-//
-
-  if ((st.step_outbits & (1 << Z_STEP_BIT)) && (st.dir_outbits & (1 << Z_DIRECTION_BIT)) == 0)
-    z_axis.target++;
-  else if ((st.step_outbits & (1 << Z_STEP_BIT)) && (st.dir_outbits & (1 << Z_DIRECTION_BIT)))
-    z_axis.target--;
-
-...
+**Note:** _if the direction of a motor needs to be reversed, the motor direction can be set with the GRBL parameter $3 - *Direction Mask*:    
+```
+$3 = 0  (Standard configuration)
+$3 = 1  (Reverse LEFT motor)
+$3 = 2  (Reverse RIGHT motor)
+$3 = 4  (Reverse Z-axis motor)
+$3 = 3  (Reverse LEFT and RIGHT motors)
 ```
 
 ### Spindle Control
