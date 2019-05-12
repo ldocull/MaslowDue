@@ -121,9 +121,9 @@ $63=5000 (Z-axis Imax)
 
 There is not yet a shield board for this solution package, but if there was, it might look like this:
 
-![MaslowDue Shield Board Top View](https://imgur.com/fsS9ltB.png)
+![MaslowDue Shield Board Top View](https://imgur.com/yLPaE3y.png)
 
-![MaslowDue Shield Board Bottom View](https://imgur.com/XNs0gSp.png)
+![MaslowDue Shield Board Bottom View](https://imgur.com/8rasmGJ.png)
 
 Gerbers and Schematics can be found on this repo under [Electronics](https://github.com/ldocull/MaslowDue/tree/master/Electronics).
 
