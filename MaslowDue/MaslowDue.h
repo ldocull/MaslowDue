@@ -26,8 +26,8 @@
 // -- SHIELD SELECTION
 //
 
-#define MakerMadeCNC_V2   /* Uncomment for V2 MakerMade CNC (1.0) Shield */
-//#define MakerMadeCNC_V1   /* Uncomment for V1 MakerMade CNC (1.0) Shield */
+//#define MakerMadeCNC_V2   /* Uncomment for V2 MakerMade CNC (1.0) Shield */
+#define MakerMadeCNC_V1   /* Uncomment for V1 MakerMade CNC (1.0) Shield */
 //#define DRIVER_L298P_12    /* Uncomment this for a L298P version 1.2 Shield */
 //#define DRIVER_L298P_11    /* Uncomment this for a L298P version 1.1 Shield */
 //#define DRIVER_L298P_10    /* Uncomment this for a L298P version 1.0 Shield */
