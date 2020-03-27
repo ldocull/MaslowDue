@@ -6,7 +6,7 @@
 
 The [MaslowCNC firmware](https://github.com/MaslowCNC/Firmware) and [GroundControl](https://github.com/MaslowCNC/GroundControl) front end software work well, but common points of discussion in the community is that it is slow and doesn't move smoothly (no accel/decel or chaining of vectors).
 
-The behavior of this revised setup will sound and act a bit different than what may have experienced with a previous stock-Maslow CNC setup. This new [GRBL](https://github.com/gnea/grbl)-driven system will be faster overall due to the splining of vectors as the machine moves. The top speed will still be limited by the use of the original Maslow CNC gear motors which will only go to about 20RPM which is about 1000mm/min.
+The behavior of this revised setup will sound and act a bit different than what may have been experienced with a previous stock-Maslow CNC setup. This new [GRBL](https://github.com/gnea/grbl)-driven system will be faster overall due to the splining of vectors as the machine moves. The top speed will still be limited by the use of the original Maslow CNC gear motors which will only go to about 20RPM which is about 1000mm/min.
 
 Please note that the chain configuration of this supplied software is for an 'under-sprocket' chain to a sled-ring system. The sled-ring keeps the math to a simple triangular system and that makes it easier to compensate out any errors over the working area.
 
