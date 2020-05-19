@@ -55,8 +55,8 @@ The machine used with this Maslow-Due firmware uses a Meticulous-Z-Axis like set
 
 Many of the parameters of GRBL are defaulted in the firmware and will not require adjustment, but some of the MaslowDue-specific parameters may require adjustment to fit your specific machine configuration.
 ```
-$81=2438.400 (Bed Width, mm): This defines a 8-foot wide work surface
-$81=1219.200 (Bed Height, mm): This defines a 4-foot high work surface
+$81=2438.400 (Bed Width, mm): This defines a 8-foot WIDE work surface
+$82=1219.200 (Bed Height, mm): This defines a 4-foot HIGH work surface
 ```
 
 ## Machine Geometry
