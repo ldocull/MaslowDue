@@ -2,6 +2,9 @@
 
 ### This is firmware to control a Maslow CNC-type machine.
 
+
+_:warning: Making your own shield can be cumbersome and expensive. Our partners at [Maker Made](https://makermade.com/) offer both [a complete kit](https://makermade.com/product/m2-automated-cutting-machine-kit/), and [just the shield](https://makermade.com/product/complete-m2-due-board-with-case/) for those interested._
+
 # About this upgrade...
 
 The [MaslowCNC firmware](https://github.com/MaslowCNC/Firmware) and [GroundControl](https://github.com/MaslowCNC/GroundControl) front end software work well, but common points of discussion in the community is that it is slow and doesn't move smoothly (no accel/decel or chaining of vectors).
@@ -32,7 +35,7 @@ The electronics which powers the Maslow-Due CNC Machine System is based on the o
 ![Cut 5V trace or remove pins..](https://imgur.com/uj6fcP6.png)
 
 The TLE5206-based boards require the same attention to 5V ingress. There are 3 places that must be cut and one place where 3.3V is patched over as shown here. **Please note that all 5V cuts are important or the Due can be damaged**:
-
+https://makermade.com/product/m2-automated-cutting-machine-kit/
 ![TEL5206 Shield Power Modifications](https://imgur.com/36tnS2x.png)
 
 Modifications can be made using a prototype shield like the [RobotDyn - Mega Protoshield Prototype Shield for Arduino Mega 2560](https://smile.amazon.com/RobotDyn-Protoshield-Prototype-breadboard-Assembled/dp/B071JDRGGR/ref=sr_1_3?keywords=mega%202560%20proto%20shield&qid=1552842751&s=gateway&sr=8-3).  This prevents any cutting or patching made directly to the Maslow Motor Shield or the Arduino Due.
