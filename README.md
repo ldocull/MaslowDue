@@ -2,11 +2,14 @@
 
 ### This is firmware to control a Maslow CNC-type machine.
 
+
+_:warning: Making your own shield can be cumbersome and expensive. Our partners at [Maker Made](https://makermade.com/) offer both [a complete kit](https://makermade.com/product/m2-automated-cutting-machine-kit/), and [just the shield](https://makermade.com/product/complete-m2-due-board-with-case/) for those interested._
+
 # About this upgrade...
 
 The [MaslowCNC firmware](https://github.com/MaslowCNC/Firmware) and [GroundControl](https://github.com/MaslowCNC/GroundControl) front end software work well, but common points of discussion in the community is that it is slow and doesn't move smoothly (no accel/decel or chaining of vectors).
 
-The behavior of this revised setup will sound and act a bit different than what may have experienced with a previous stock-Maslow CNC setup. This new [GRBL](https://github.com/gnea/grbl)-driven system will be faster overall due to the splining of vectors as the machine moves. The top speed will still be limited by the use of the original Maslow CNC gear motors which will only go to about 20RPM which is about 1000mm/min.
+The behavior of this revised setup will sound and act a bit different than what may have been experienced with a previous stock-Maslow CNC setup. This new [GRBL](https://github.com/gnea/grbl)-driven system will be faster overall due to the splining of vectors as the machine moves. The top speed will still be limited by the use of the original Maslow CNC gear motors which will only go to about 20RPM which is about 1000mm/min.
 
 Please note that the chain configuration of this supplied software is for an 'under-sprocket' chain to a sled-ring system. The sled-ring keeps the math to a simple triangular system and that makes it easier to compensate out any errors over the working area.
 
@@ -25,14 +28,14 @@ First clone the Firmware repository, then install and setup the Arduino IDE.
 # Maslow-Due Electronics
 The electronics which powers the Maslow-Due CNC Machine System is based on the original Maslow-CNC shield board. The Maslow-Due (DUE) requires that the Arduino Mega2560 board (standard to the MaslowCNC) be upgraded to an Arduino Due. Since the DUE runs at a lower power supply voltage (3.3V instead of 5V) **3.9K shunt resistors**, in parallel with each motor phase, **are required** to provide safe operating voltages from the encoders to the I/O pins of the DUE. Additional **0.01uF filter caps are also required** to prevent positioning errors from noise spikes on the encoder cables. An **EEPROM must be added** to store the non-volatile parameters (the firmware will not work without it).
 
-![Circuit Adaptations](https://imgur.com/BIu1jCN.png)
+![Circuit Adaptations](https://imgur.com/1lLRGGO.png)
 
 **Note:** _the board ID pins in the lower-left corner of the motor shield should be removed or not allowed to pass 5V to the Arduino Due. Cutting the trace as shown below also stops the 5V from getting back to the I/O pins:_
 
 ![Cut 5V trace or remove pins..](https://imgur.com/uj6fcP6.png)
 
 The TLE5206-based boards require the same attention to 5V ingress. There are 3 places that must be cut and one place where 3.3V is patched over as shown here. **Please note that all 5V cuts are important or the Due can be damaged**:
-
+https://makermade.com/product/m2-automated-cutting-machine-kit/
 ![TEL5206 Shield Power Modifications](https://imgur.com/36tnS2x.png)
 
 Modifications can be made using a prototype shield like the [RobotDyn - Mega Protoshield Prototype Shield for Arduino Mega 2560](https://smile.amazon.com/RobotDyn-Protoshield-Prototype-breadboard-Assembled/dp/B071JDRGGR/ref=sr_1_3?keywords=mega%202560%20proto%20shield&qid=1552842751&s=gateway&sr=8-3).  This prevents any cutting or patching made directly to the Maslow Motor Shield or the Arduino Due.
@@ -55,8 +58,8 @@ The machine used with this Maslow-Due firmware uses a Meticulous-Z-Axis like set
 
 Many of the parameters of GRBL are defaulted in the firmware and will not require adjustment, but some of the MaslowDue-specific parameters may require adjustment to fit your specific machine configuration.
 ```
-$81=2438.400 (Bed Width, mm): This defines a 8-foot wide work surface
-$82=1219.200 (Bed Height, mm): This defines a 4-foot high work surface
+$81=2438.400 (Bed Width, mm): This defines a 8-foot WIDE work surface
+$82=1219.200 (Bed Height, mm): This defines a 4-foot HIGH work surface
 ```
 
 ## Machine Geometry

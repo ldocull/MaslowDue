@@ -26,6 +26,7 @@
 // -- SHIELD SELECTION
 //
 
+//#define MakerMadeCNC_V2   /* Uncomment for V2 MakerMade CNC (1.0) Shield */
 #define MakerMadeCNC_V1   /* Uncomment for V1 MakerMade CNC (1.0) Shield */
 //#define DRIVER_L298P_12    /* Uncomment this for a L298P version 1.2 Shield */
 //#define DRIVER_L298P_11    /* Uncomment this for a L298P version 1.1 Shield */
@@ -37,6 +38,20 @@
 
 // HARDWARE PIN MAPPING
 #define HeartBeatLED 13
+
+#ifdef MakerMadeCNC_V2
+  #define YP_PWM 6      /* Y-axis positive direction PWM output */
+  #define YM_PWM 4      /* Y-axis negative direction PWM output */
+  #define Y_ENABLE 5
+
+  #define ZP_PWM 7      /* Z-axis positive direction PWM output */
+  #define ZM_PWM 9      /* Z-axis negative direction PWM output */
+  #define Z_ENABLE 8
+
+  #define XP_PWM 12     /* X-axis positive direction PWM output */
+  #define XM_PWM 11     /* X-axis negative direction PWM output */
+  #define X_ENABLE 10
+#endif
 
 #ifdef MakerMadeCNC_V1
   #define YP_PWM 6      /* Y-axis positive direction PWM output */
@@ -124,6 +139,16 @@
   #define Encoder_XA 2  /* X encoder phases A & B */
   #define Encoder_XB 3
 #endif
+
+#ifdef MakerMadeCNC_V2
+  #define Encoder_YA 20 /* Y encoder phases A & B */
+  #define Encoder_YB 21
+  #define Encoder_ZA 18 /* Z encoder phases A & B */
+  #define Encoder_ZB 19
+  #define Encoder_XA 2  /* X encoder phases A & B */
+  #define Encoder_XB 3
+#endif
+
 #ifdef DRIVER_L298P_12
   #define Encoder_YA 20 /* Y encoder phases A & B */
   #define Encoder_YB 21
