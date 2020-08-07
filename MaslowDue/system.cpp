@@ -24,8 +24,9 @@
   #include "MaslowDue.h"
 
   #define SPROCKET_RADIUS_MM      (10.1)
-    
+
   void  triangularInverse   (float xTarget,float yTarget, float* aChainLength, float* bChainLength);
+  void  forwardKinematics(float chainALength, float chainBLength, float* xPos, float* yPos);
   void  triangular(float aChainLength, float bChainLength, float *x,float *y );
   void  recomputeGeometry(void);
   float height_to_bit; //distance between sled attach point and bit
@@ -41,9 +42,9 @@
   float Motor2Distance; //right motor axis distance to sled
 
   // output = chain lengths measured from 12 o'clock
-  float Chain1; //left chain length 
+  float Chain1; //left chain length
   float Chain2; //right chain length
-    
+
 #endif
 
 void system_init()
@@ -97,10 +98,10 @@ ISR(CONTROL_INT_vect)
     } else if (bit_istrue(pin,CONTROL_PIN_INDEX_CYCLE_START)) {
       bit_true(sys_rt_exec_state, EXEC_CYCLE_START);
     } else if (bit_istrue(pin,CONTROL_PIN_INDEX_FEED_HOLD)) {
-      bit_true(sys_rt_exec_state, EXEC_FEED_HOLD); 
+      bit_true(sys_rt_exec_state, EXEC_FEED_HOLD);
     } else if (bit_istrue(pin,CONTROL_PIN_INDEX_SAFETY_DOOR)) {
       bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
-    } 
+    }
   }
 }
 #endif
@@ -333,7 +334,7 @@ float system_convert_axis_steps_to_mpos(int32_t *steps, uint8_t idx)
     }
   #else
     #ifdef MASLOWCNC
-      if (idx==X_AXIS) { 
+      if (idx==X_AXIS) {
         pos = (float)system_convert_maslow_to_x_axis_steps(steps) / settings.steps_per_mm[LEFT_MOTOR];
       } else if (idx==Y_AXIS) {
         pos = (float)system_convert_maslow_to_y_axis_steps(steps) / settings.steps_per_mm[RIGHT_MOTOR];
@@ -342,7 +343,7 @@ float system_convert_axis_steps_to_mpos(int32_t *steps, uint8_t idx)
       }
     #else
       pos = steps[idx]/settings.steps_per_mm[idx];
-    #endif  
+    #endif
   #endif
   return(pos);
 }
@@ -411,7 +412,7 @@ uint8_t system_check_travel_limits(float *target)
 // Maslow math - coordinate system tranformation
 // calculate machine coordinate (x-y) postion from chain lengths in mm (pos in mm)
   void triangular(float aChainLength, float bChainLength, float *x,float *y )
-  { 
+  {
     recomputeGeometry();
 //----------------------------------------------------------------------> arbitrary triangle method:
 //                   cos(B) = ((b^2 + c^2 - a^2) / (2 * b * c))
@@ -435,53 +436,113 @@ uint8_t system_check_travel_limits(float *target)
 //
      x_pos = (float)(-1*_xCordOfMotor) + x_pos;  // apply table offsets to regain absolute position
      y_pos = (float)(_yCordOfMotor - y_pos);
-     
+
 // back out any correction factor
      x_pos /= (double)settings.XcorrScaling;
      y_pos /= (double)settings.YcorrScaling;
-//     
+//
      *x = (float) x_pos;
      *y = (float) y_pos;
   }
 
+  #define KINEMATICSMAXGUESS 200
+
+  void forwardKinematics(float chainALength, float chainBLength, float* xPos, float* yPos)
+  {
+    Serial.println(F("[Forward Calculating Position]"));
+
+    float guessLengthA;
+    float guessLengthB;
+
+    float xGuess = *xPos, yGuess = *yPos;
+
+    int guessCount = 0;
+
+    while(1){
+        //check our guess
+        triangularInverse(xGuess, yGuess, &guessLengthA, &guessLengthB);
+
+        float aChainError = chainALength - guessLengthA;
+        float bChainError = chainBLength - guessLengthB;
+
+        //adjust the guess based on the result
+        xGuess = xGuess + .1*aChainError - .1*bChainError;
+        yGuess = yGuess - .1*aChainError - .1*bChainError;
+
+        guessCount++;
+
+        #if defined (KINEMATICSDBG) && KINEMATICSDBG > 0
+          Serial.print(F("[PEk:"));
+          Serial.print(aChainError);
+          Serial.print(',');
+          Serial.print(bChainError);
+          Serial.print(',');
+          Serial.print('0');
+          Serial.println(F("]"));
+        #endif
+
+        //if we've converged on the point...or it's time to give up, exit the loop
+        if ((abs(aChainError) < .1 && abs(bChainError) < .1) or
+          guessCount > KINEMATICSMAXGUESS or
+          guessLengthA > settings.chainLength or
+          guessLengthB > settings.chainLength)
+        {
+            if((guessCount > KINEMATICSMAXGUESS) or guessLengthA > settings.chainLength or guessLengthB > settings.chainLength){
+                Serial.print(F("Message: Unable to find valid machine position for chain lengths "));
+                Serial.print(chainALength);
+                Serial.print(", ");
+                Serial.print(chainBLength);
+                Serial.println(F(" . Please set the chains to a known length (Actions -> Set Chain Lengths)"));
+                *xPos = 0;
+                *yPos = 0;
+            }
+            else{
+                Serial.println("position loaded at:");
+                Serial.println(xGuess);
+                Serial.println(yGuess);
+                *xPos = xGuess;
+                *yPos = yGuess;
+            }
+            break;
+        }
+    }
+  }
+
 // Maslow CNC calculation only. Returns x or y-axis "steps" based on Maslow motor steps.
-// converts current position two-chain intersection (steps) into x / y cartesian in STEPS..  
+// converts current position two-chain intersection (steps) into x / y cartesian in STEPS..
   void system_convert_maslow_to_xy_steps(int32_t *steps, int32_t *x_steps, int32_t *y_steps)
   {
-    float x_pos, y_pos; 
+    float x_pos, y_pos;
 
-    triangular((float)(steps[LEFT_MOTOR]/settings.steps_per_mm[LEFT_MOTOR]), 
-               (float)(steps[RIGHT_MOTOR]/settings.steps_per_mm[RIGHT_MOTOR]),  
+    triangular((float)(steps[LEFT_MOTOR]/settings.steps_per_mm[LEFT_MOTOR]),
+               (float)(steps[RIGHT_MOTOR]/settings.steps_per_mm[RIGHT_MOTOR]),
                       &x_pos, &y_pos);
-                              
+
     *x_steps = (int32_t) x_pos * settings.steps_per_mm[X_AXIS];
     *y_steps = (int32_t) y_pos * settings.steps_per_mm[Y_AXIS];
   }
 
   int32_t system_convert_maslow_to_x_axis_steps(int32_t *steps)
   {
-    int32_t x_steps, y_steps; 
-    system_convert_maslow_to_xy_steps(steps, &x_steps, &y_steps);  
+    int32_t x_steps, y_steps;
+    system_convert_maslow_to_xy_steps(steps, &x_steps, &y_steps);
     return(x_steps);
   }
-  
+
   int32_t system_convert_maslow_to_y_axis_steps(int32_t *steps)
   {
-    int32_t x_steps, y_steps; 
-    system_convert_maslow_to_xy_steps(steps, &x_steps, &y_steps);  
+    int32_t x_steps, y_steps;
+    system_convert_maslow_to_xy_steps(steps, &x_steps, &y_steps);
     return(y_steps);
   }
 
-// limit motion to stay within table (in mm)  
+// limit motion to stay within table (in mm)
   void verifyValidTarget(float* xTarget,float* yTarget)
   {
-      //If the target point is beyond one of the edges of the board, the machine stops at the edge
+      recomputeGeometry();
 
-      recomputeGeometry();   
-// no limits for now
-//      *xTarget = (*xTarget < -halfWidth) ? -halfWidth : (*xTarget > halfWidth) ? halfWidth : *xTarget;
-//      *yTarget = (*yTarget < -halfHeight) ? -halfHeight : (*yTarget > halfHeight) ? halfHeight : *yTarget;
-  
+     *xTarget = (*xTarget < -halfWidth) ? -halfWidth : (*xTarget > halfWidth) ? halfWidth : *xTarget;
+     *yTarget = (*yTarget < -halfHeight) ? -halfHeight : (*yTarget > halfHeight) ? halfHeight : *yTarget;
   }
 
 // calculate left and right (LEFT_MOTOR/RIGHT_MOTOR) chain lengths from X-Y cartesian coordinates  (in mm)
@@ -491,16 +552,46 @@ uint8_t system_check_travel_limits(float *target)
       //Confirm that the coordinates are on the table
       verifyValidTarget(&xTarget, &yTarget);
 
-      // scale target (absolute position) by any correction factor
-      double xxx = (double)xTarget * (double)settings.XcorrScaling;
-      double yyy = (double)yTarget * (double)settings.YcorrScaling;
-  
-      //Calculate motor axes length to the bit
-      double Motor1Distance = sqrt(pow((double)(-1*_xCordOfMotor) - (double)(xxx),2)+pow((double)(_yCordOfMotor) - (double(yyy)),2));
-      double Motor2Distance = sqrt(pow((double)   (_xCordOfMotor) - (double)(xxx),2)+pow((double)(_yCordOfMotor) - (double)(yyy),2));
+      //Set up variables
+      float Chain1Angle = asin((_yCordOfMotor - yTarget)/Motor1Distance) + asin(R/Motor1Distance);
+      float Chain2Angle = asin((_yCordOfMotor - yTarget)/Motor2Distance) + asin(R/Motor2Distance);
+      float Chain1AroundSprocket = R * Chain1Angle;
+      float Chain2AroundSprocket = R * Chain2Angle;
 
-      *aChainLength = Motor1Distance;
-      *bChainLength = Motor2Distance;
+      //Calculate motor axes length to the bit
+      float Motor1Distance = sqrt(pow((-1*_xCordOfMotor - xTarget),2)+pow((_yCordOfMotor - yTarget),2));
+      float Motor2Distance = sqrt(pow((_xCordOfMotor - xTarget),2)+pow((_yCordOfMotor - yTarget),2));
+
+      //Calculate the straight chain length from the sprocket to the bit
+      float Chain1Straight = sqrt(pow(Motor1Distance,2)-pow(R,2));
+      float Chain2Straight = sqrt(pow(Motor2Distance,2)-pow(R,2));
+
+      //Correct the straight chain lengths to account for chain sag
+      Chain1Straight *= (1 + ((settings.chainSagCorrection / 1000000000000) * pow(cos(Chain1Angle),2) * pow(Chain1Straight,2) * pow((tan(Chain2Angle) * cos(Chain1Angle)) + sin(Chain1Angle),2)));
+      Chain2Straight *= (1 + ((settings.chainSagCorrection / 1000000000000) * pow(cos(Chain2Angle),2) * pow(Chain2Straight,2) * pow((tan(Chain1Angle) * cos(Chain2Angle)) + sin(Chain2Angle),2)));
+
+      //Calculate total chain lengths accounting for sprocket geometry and chain sag
+      float Chain1 = Chain1AroundSprocket + Chain1Straight / (1.0f + settings.leftChainTolerance / 100.0f);
+      float Chain2 = Chain2AroundSprocket + Chain2Straight / (1.0f + settings.rightChainTolerance / 100.0f);
+
+      //Subtract of the virtual length which is added to the chain by the rotation mechanism
+      Chain1 = Chain1 - settings.rotationDiskRadius;
+      Chain2 = Chain2 - settings.rotationDiskRadius;
+
+      *aChainLength = Chain1;
+      *bChainLength = Chain2;
+
+
+      // // scale target (absolute position) by any correction factor
+      // double xxx = (double)xTarget * (double)settings.XcorrScaling;
+      // double yyy = (double)yTarget * (double)settings.YcorrScaling;
+
+      // //Calculate motor axes length to the bit
+      // double Motor1Distance = sqrt(pow((double)(-1*_xCordOfMotor) - (double)(xxx),2)+pow((double)(_yCordOfMotor) - (double(yyy)),2));
+      // double Motor2Distance = sqrt(pow((double)   (_xCordOfMotor) - (double)(xxx),2)+pow((double)(_yCordOfMotor) - (double)(yyy),2));
+
+      // *aChainLength = Motor1Distance;
+      // *bChainLength = Motor2Distance;
       return;
   }
 

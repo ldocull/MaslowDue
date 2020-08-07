@@ -3,7 +3,7 @@
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-    
+
     Maslow Due Control Software is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -12,23 +12,23 @@
     along with the Maslow Control Software.  If not, see <http://www.gnu.org/licenses/>.
 
     Created by:  Larry D O'Cull  Feb 10, 2019
-    
-    Some portions of this package directly or indirectly pull from from the Maslow CNC 
+
+    Some portions of this package directly or indirectly pull from from the Maslow CNC
     firmware for Aduino Mega.   Those parts are Copyright 2014-2017 Bar Smith <https://www.maslowcnc.com/>
 
    This file (module) specifically contains the step-direction control used to drive the Maslow gear motors
    using the Maslow CNC shield board. Note: 10nf and 3.9K (parallel) must be added from each encoder phase
    lead to ground on the shield PCB in order for it to be compatible with the 3.3V high-speed inputs of the Arduino Due.
-  
+
    The orignal Maslow firmware does not drive the motor in a 3-state (braking mode) or in a position loop, but
    is structured more as a precise velocity-loop based system. The behavior of this new drive setup will sound
    and act a bit different than what may have been experienced with a previous stock-Maslow setup. Generally,
    the GRBL driven system will seem faster overall due to the splining of vectors as the machine moves. The
    top speed will still be limited by the use of the original gear motors which will only go to about 20RPM.
-  
+
    Also note that the chain configuration of this supplied software is for an 'under-sprocket' chain to a sled-ring
    system. The sled-ring simplifies the math to a triangular system and that makes it easier to compensate out any error.
- 
+
  */
 #include "MaslowDue.h"
 #include "grbl.h"
@@ -77,7 +77,7 @@ void serialScanner_handler(void);
 void gc_init(void); // Set g-code parser to default state
 void spindle_init(void);
 void coolant_init(void);
-void limits_init(void); 
+void limits_init(void);
 void probe_init(void);
 void plan_reset(void); // Clear block buffer and planner variables
 void st_reset(void); // Clear stepper subsystem variables.
@@ -95,9 +95,9 @@ long compute_PID(struct PID_MOTION *axis_ptr)
   int sign;
   long Speed;
   int PWM_value;
-  
+
   axis_ptr->Speed = ((axis_ptr->Kp) * axis_ptr->Error);    // proportional term..
-  
+
   axis_ptr->Integral += axis_ptr->Error;
   if(axis_ptr->Integral > axis_ptr->Imax) axis_ptr->Integral = axis_ptr->Imax;
   if(axis_ptr->Integral < (-axis_ptr->Imax)) axis_ptr->Integral = (-axis_ptr->Imax);
@@ -110,13 +110,13 @@ long compute_PID(struct PID_MOTION *axis_ptr)
 
   Speed = axis_ptr->Speed;
   sign = 1;
-  if(Speed < 0)  
+  if(Speed < 0)
     sign = -1;  // remember sign of direction
-  
+
   Speed = abs(Speed); // make a magnitude
   Speed += 128;  // round in the fraction..  ie V=101720 CMD=101 (102)
   Speed >>= 10;  // Scale out, but leave the fraction!
-  
+
   PWM_value = (int) Speed;
   if(PWM_value > MAX_PWM_LEVEL) PWM_value = MAX_PWM_LEVEL;  // PWM limiter
   #if (MIN_PWM_LEVEL > 0)
@@ -125,7 +125,7 @@ long compute_PID(struct PID_MOTION *axis_ptr)
 
  #ifdef TUNING_MODE
   if(!posEnabled) Speed = 0;   // all stop (forced)
- #endif 
+ #endif
 
   if(sign > 0)
   {
@@ -153,7 +153,7 @@ long compute_PID(struct PID_MOTION *axis_ptr)
       analogWrite(axis_ptr->M_PWM, PWM_value);
    #endif
   }
-  
+
   return(axis_ptr->Speed);
 }
 
@@ -162,7 +162,7 @@ void motorsDisabled(void)
     Motors_Disabled = 1;
   #ifndef DRIVER_TLE5206
     digitalWrite(X_ENABLE, 0);  // disable the motor driver
-    digitalWrite(Y_ENABLE, 0);  
+    digitalWrite(Y_ENABLE, 0);
     digitalWrite(Z_ENABLE, 0);
   #endif
 //  DEBUG_COM_PORT.print("MOTORS OFF\n");
@@ -174,17 +174,17 @@ void motorsEnabled(void)
   #ifndef DRIVER_TLE5206
     digitalWrite(X_ENABLE, 1);  // Enable the motor driver
     digitalWrite(Y_ENABLE, 1);
-    digitalWrite(Z_ENABLE, 1);  
+    digitalWrite(Z_ENABLE, 1);
   #endif
 //  DEBUG_COM_PORT.print("MOTORS ON\n");
 }
 
-void MotorPID_Timer_handler(void)  // PID interrupt service routine 
-{     
+void MotorPID_Timer_handler(void)  // PID interrupt service routine
+{
     x_axis.Error = x_axis.target - x_axis.axis_Position; // current position error
     y_axis.Error = y_axis.target - y_axis.axis_Position; // current position error
     z_axis.Error = z_axis.target - z_axis.axis_Position; // current position error
-  
+
     interrupts();  // reenable interrupts so encoder pulses will all be counted!!
 
     xSpeed = compute_PID(&x_axis);
@@ -206,7 +206,7 @@ void MotorPID_Timer_handler(void)  // PID interrupt service routine
   //  #ifndef VARIABLE_SPINDLE
   //   serialScanner_handler(); // work the serial buffer pre-parser from this timer!
   //  #endif
-   
+
     digitalWrite(HeartBeatLED, healthLEDcounter++ & 0x40);
 }
 
@@ -223,13 +223,13 @@ void update_Encoder_XA(void)
       x_axis.axis_Position++;
       lastXAstate = encState;
       break;
-      
+
     case 1:
     case 2:
       x_axis.axis_Position--;
       lastXAstate = encState;
       break;
-  } 
+  }
 }
 
 void update_Encoder_XB(void)
@@ -245,13 +245,13 @@ void update_Encoder_XB(void)
       x_axis.axis_Position--;
       lastXBstate = encState;
       break;
-      
+
     case 1:
     case 2:
       x_axis.axis_Position++;
       lastXBstate = encState;
       break;
-  } 
+  }
 }
 
 void update_Encoder_YA(void)
@@ -265,15 +265,15 @@ void update_Encoder_YA(void)
     case 0:
     case 3:
       y_axis.axis_Position++;
-      lastYAstate = encState;  
+      lastYAstate = encState;
       break;
-      
+
     case 1:
     case 2:
       y_axis.axis_Position--;
-      lastYAstate = encState;  
+      lastYAstate = encState;
       break;
-  } 
+  }
 }
 
 void update_Encoder_YB(void)
@@ -287,15 +287,15 @@ void update_Encoder_YB(void)
     case 0:
     case 3:
       y_axis.axis_Position--;
-      lastYBstate = encState;    
+      lastYBstate = encState;
       break;
-      
+
     case 1:
     case 2:
      y_axis.axis_Position++;
-     lastYBstate = encState;    
+     lastYBstate = encState;
      break;
-  } 
+  }
 }
 
 void update_Encoder_ZA(void)
@@ -309,15 +309,15 @@ void update_Encoder_ZA(void)
     case 0:
     case 3:
       z_axis.axis_Position++;
-      lastZAstate = encState;  
+      lastZAstate = encState;
       break;
-      
+
     case 1:
     case 2:
       z_axis.axis_Position--;
-      lastZAstate = encState;  
+      lastZAstate = encState;
       break;
-  } 
+  }
 }
 
 void update_Encoder_ZB(void)
@@ -331,15 +331,15 @@ void update_Encoder_ZB(void)
     case 0:
     case 3:
       z_axis.axis_Position--;
-      lastZBstate = encState;  
+      lastZBstate = encState;
       break;
-      
+
     case 1:
     case 2:
       z_axis.axis_Position++;
-      lastZBstate = encState;  
+      lastZBstate = encState;
       break;
-  } 
+  }
 }
 
 //
@@ -350,7 +350,7 @@ void setup()
   int microseconds_per_millisecond = 1000;
 
   noInterrupts();           // disable all interrupts
-  
+
   pinMode(HeartBeatLED, OUTPUT);
   digitalWrite(HeartBeatLED, LOW);
 
@@ -413,11 +413,11 @@ void setup()
 
   pinMode(Spindle_PWM, OUTPUT);
   digitalWrite(Spindle_PWM, 0);
-  
+
   motorsDisabled();
 
     // initialize hard-time MotorPID_Timer for servos (10ms loop)
-  Timer5.attachInterrupt(MotorPID_Timer_handler).setPeriod(10000).start(); 
+  Timer5.attachInterrupt(MotorPID_Timer_handler).setPeriod(10000).start();
 
     // hook up encoders
   attachInterrupt(digitalPinToInterrupt(Encoder_XA), update_Encoder_XA, CHANGE);
@@ -452,7 +452,7 @@ void setup()
   z_axis.Kp = settings.z_PID_Kp; // get loop values from storage
   z_axis.Ki = settings.z_PID_Ki;
   z_axis.Kd = settings.z_PID_Kd;
-  z_axis.Imax = settings.z_PID_Imax;  
+  z_axis.Imax = settings.z_PID_Imax;
   z_axis.axis_Position = 0;
   z_axis.target = 0;
   z_axis.target_PS = 0;
@@ -474,7 +474,7 @@ void setup()
     DEBUG_COM_PORT.begin(BAUD_RATE); // setup serial for tuning mode only
     DEBUG_COM_PORT.print("DEBUG\n");
   #endif
-  
+
 
 #ifndef TUNING_MODE
   // Check for power-up and set system alarm if homing is enabled to force homing cycle
@@ -487,7 +487,7 @@ void setup()
   #ifdef HOMING_INIT_LOCK
     if (bit_istrue(settings.flags,BITFLAG_HOMING_ENABLE)) { sys.state = STATE_ALARM; }
   #endif
-  
+
   // Force Grbl into an ALARM state upon a power-cycle or hard reset.
   #ifdef FORCE_INITIALIZATION_ALARM
     sys.state = STATE_ALARM;
@@ -501,13 +501,13 @@ void setup()
 }
 
 void loop()
-{   
+{
 #ifndef TUNING_MODE
-    // Arduinos love for this loop to run free -- so no blocking!  
+    // Arduinos love for this loop to run free -- so no blocking!
     if(protocol_main_loop() !=0)  // in exeptions, holds, etc.. reinitialise!
        protocol_init();
 #else
-    tuningLoop();  
+    tuningLoop();
 #endif
 }
 
@@ -516,7 +516,7 @@ void loop()
     float t1,t2, xx, yy;
     void  triangularInverse   (float xTarget,float yTarget, float* aChainLength, float* bChainLength);
     void  triangular(float aChainLength, float bChainLength, float *x,float *y );
-    void settings_restore(uint8_t restore_flag); 
+    void settings_restore(uint8_t restore_flag);
   void tuningLoop(void)
   {
       // Scan for user stuff
@@ -531,10 +531,10 @@ void loop()
   //         DEBUG_COM_PORT.print(selected_axis->Error,DEC);
   //         DEBUG_COM_PORT.print("\tCMD=");
   //         DEBUG_COM_PORT.print(selected_axis->Speed,DEC);
-  //        
+  //
   //         DEBUG_COM_PORT.print("\n");
   //  }
-    if ( DEBUG_COM_PORT.available() > 0) 
+    if ( DEBUG_COM_PORT.available() > 0)
     {
               // read the incoming byte:
       incomingByte =  DEBUG_COM_PORT.read();
@@ -545,26 +545,26 @@ void loop()
            DEBUG_COM_PORT.print("X-Axis Selected\n");
           which_axis = 'X';
           break;
-  
+
         case 'y':
           selected_axis = &y_axis;
            DEBUG_COM_PORT.print("Y-Axis Selected\n");
           which_axis = 'Y';
           break;
-        
+
         case 'z':
           selected_axis = &z_axis;
            DEBUG_COM_PORT.print("Z-Axis Selected\n");
           which_axis = 'Z';
           break;
-                  
+
         case 'g':
           posEnabled = 1;
           break;
-          
+
         case 'r':   // reset current position
           settings_restore(0xFF); // Load Grbl settings from EEPROM
-  
+
           selected_axis->axis_Position = 0;
           selected_axis->target = 0;
           selected_axis->target_PS = 0;
@@ -572,88 +572,89 @@ void loop()
           stepTestEnable = 0;
           posEnabled = 0;
           break;
-  
+
         case 'i':
           selected_axis->Ki =  DEBUG_COM_PORT.parseInt();
            DEBUG_COM_PORT.print("Ki == ");
            DEBUG_COM_PORT.print(selected_axis->Ki,DEC);
-          break; 
-  
+          break;
+
         case 'm':
           selected_axis->Imax =  DEBUG_COM_PORT.parseInt();
            DEBUG_COM_PORT.print("Imax == ");
            DEBUG_COM_PORT.print(selected_axis->Imax,DEC);
-          break;     
-          
+          break;
+
         case 'd':
           selected_axis->Kd =  DEBUG_COM_PORT.parseInt();
            DEBUG_COM_PORT.print("Kd == ");
            DEBUG_COM_PORT.print(selected_axis->Kd,DEC);
-          break;        
-  
+          break;
+
         case 'p':
           selected_axis->Kp =  DEBUG_COM_PORT.parseInt();
            DEBUG_COM_PORT.print("Kp == ");
            DEBUG_COM_PORT.print(selected_axis->Kp,DEC);
-          break;        
-  
+          break;
+
         case 's':
           stepTestEnable = 1;
           selected_axis->stepSize =  DEBUG_COM_PORT.parseInt();
            DEBUG_COM_PORT.print("S == ");
            DEBUG_COM_PORT.print(selected_axis->stepSize,DEC);
-          break;        
-  
+          break;
+
     #ifdef MASLOWCNC
-  
+
     void recomputeGeometry(void);
-  
+
         case 'a':
-        // TEST  
+        // TEST
           recomputeGeometry();
           xx = DEBUG_COM_PORT.parseFloat();
           yy = DEBUG_COM_PORT.parseFloat();
           triangularInverse(xx, yy, &t1, &t2);   // test kinematics
           DEBUG_COM_PORT.print("\n xx,yy = ");   // from x,y to Left/Right back to x,y
           DEBUG_COM_PORT.print(xx);
-          DEBUG_COM_PORT.print(",");    
+          DEBUG_COM_PORT.print(",");
           DEBUG_COM_PORT.print(yy);
-          DEBUG_COM_PORT.print(" -> L,R: ");    
+          DEBUG_COM_PORT.print(" -> L,R: ");
           DEBUG_COM_PORT.print(t1);
-          DEBUG_COM_PORT.print(",");    
+          DEBUG_COM_PORT.print(",");
           DEBUG_COM_PORT.print(t2);
-  
-          triangular(t1, t2, &xx, &yy );
-          DEBUG_COM_PORT.print(" <= L,R: ");    
+
+          triangular(t1, t2, &xx, &yy);
+          //forwardKinematics(t1, t2, &xx, &yy );
+          DEBUG_COM_PORT.print(" <= L,R: ");
           DEBUG_COM_PORT.print(t1);
-          DEBUG_COM_PORT.print(",");    
+          DEBUG_COM_PORT.print(",");
           DEBUG_COM_PORT.print(t2);
           DEBUG_COM_PORT.print(" xx,yy = ");
           DEBUG_COM_PORT.print(xx);
-          DEBUG_COM_PORT.print(",");    
+          DEBUG_COM_PORT.print(",");
           DEBUG_COM_PORT.print(yy);
-          DEBUG_COM_PORT.print("\n");    
-  
+          DEBUG_COM_PORT.print("\n");
+
           break;
     #endif
-    
+
         case '+':   // Move
           selected_axis->target += 1000;
           break;
-          
+
         case '-':   // Move
           selected_axis->target -= 1000;
           break;
-  
+
         case '*':   // Move
           selected_axis->target += 1;
           break;
-          
+
         case '/':   // Move
           selected_axis->target -= 1;
           break;
-  
-  
+
+
         default:
            DEBUG_COM_PORT.print(which_axis);
            DEBUG_COM_PORT.print(": Kp = ");
@@ -664,7 +665,7 @@ void loop()
            DEBUG_COM_PORT.print(selected_axis->Kd,DEC);
            DEBUG_COM_PORT.print(" Imax = ");
            DEBUG_COM_PORT.print(selected_axis->Imax,DEC);
-  
+
            DEBUG_COM_PORT.print("\nerr=");
            DEBUG_COM_PORT.print(selected_axis->Error,DEC);
            DEBUG_COM_PORT.print("\t\ti=");
@@ -682,11 +683,10 @@ void loop()
            DEBUG_COM_PORT.print("\tzCMD=");
            DEBUG_COM_PORT.print(zSpeed,DEC);
            DEBUG_COM_PORT.print("\n");
-  
+
           break;
       }
        DEBUG_COM_PORT.print("\n");
     }
   }
  #endif
-  

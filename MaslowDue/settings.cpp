@@ -65,12 +65,12 @@ settings_t settings;
     .x_PID_Ki = default_xKi,
     .x_PID_Kd = default_xKd,
     .x_PID_Imax = default_xImax,
-  
+
     .y_PID_Kp = default_yKp,
     .y_PID_Ki = default_yKi,
     .y_PID_Kd = default_yKd,
     .y_PID_Imax = default_yImax,
-    
+
     .z_PID_Kp = default_zKp,
     .z_PID_Ki = default_zKi,
     .z_PID_Kd = default_zKd,
@@ -92,7 +92,7 @@ settings_t settings;
     .sledWidth = default_sledWidth,
 
     .XcorrScaling = default_XcorrScaling,
-    .YcorrScaling = default_YcorrScaling };  
+    .YcorrScaling = default_YcorrScaling };
 
 #else
 
@@ -133,13 +133,13 @@ settings_t settings;
     .max_travel[Z_AXIS] = (-DEFAULT_Z_MAX_TRAVEL)};
 
 #endif
-  
+
 
 // Method to store startup lines into EEPROM
 void settings_store_startup_line(uint8_t n, char *line)
 {
   #ifdef FORCE_BUFFER_SYNC_DURING_EEPROM_WRITE
-    protocol_buffer_synchronize(); // A startup line may contain a motion and be executing. 
+    protocol_buffer_synchronize(); // A startup line may contain a motion and be executing.
   #endif
   uint32_t addr = n*(LINE_BUFFER_SIZE+1)+EEPROM_ADDR_STARTUP_BLOCK;
   memcpy_to_eeprom_with_checksum(addr,(char*)line, LINE_BUFFER_SIZE);
@@ -371,12 +371,12 @@ uint8_t settings_store_global_setting(uint8_t parameter, float value) {
         case 41: settings.x_PID_Ki = (uint32_t)value ; break;
         case 42: settings.x_PID_Kd = (uint32_t)value ; break;
         case 43: settings.x_PID_Imax = (uint32_t)value ; break;
-  
+
         case 50: settings.y_PID_Kp = (uint32_t)value ; break;
         case 51: settings.y_PID_Ki = (uint32_t)value ; break;
         case 52: settings.y_PID_Kd = (uint32_t)value ; break;
         case 53: settings.y_PID_Imax = (uint32_t)value ; break;
-    
+
         case 60: settings.z_PID_Kp = (uint32_t)value ; break;
         case 61: settings.z_PID_Ki = (uint32_t)value ; break;
         case 62: settings.z_PID_Kd = (uint32_t)value ; break;
@@ -389,7 +389,14 @@ uint8_t settings_store_global_setting(uint8_t parameter, float value) {
         case 84: settings.motorOffsetY = (float)value ; break;
 
         case 85: settings.XcorrScaling = (float)value ; break;
-        case 86: settings.YcorrScaling = (float)value ; break;                          
+        case 86: settings.YcorrScaling = (float)value ; break;
+
+        case 87: settings.chainSagCorrection = (float)value ; break;
+        case 88: settings.leftChainTolerance = (float)value ; break;
+        case 89: settings.rightChainTolerance = (float)value ; break;
+        case 90: settings.rotationDiskRadius = (float)value ; break;
+
+        case 91: settings.chainLength = (float)value ; break;
       #endif
 
       default:
