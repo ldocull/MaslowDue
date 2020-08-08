@@ -3,7 +3,7 @@
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-    
+
     Maslow Due Control Software is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -12,10 +12,10 @@
     along with the Maslow Control Software.  If not, see <http://www.gnu.org/licenses/>.
 
     Created by:  Larry D O'Cull  Feb 10, 2019
-    
-    Some portions of this package directly or indirectly pull from from the Maslow CNC 
+
+    Some portions of this package directly or indirectly pull from from the Maslow CNC
     firmware for Aduino Mega.   Those parts are Copyright 2014-2017 Bar Smith <https://www.maslowcnc.com/>
-    
+
     */
 // This is the main maslow include file
 
@@ -113,11 +113,11 @@
   #define YP_PWM 6      /* Y-axis positive direction PWM output */
   #define YM_PWM 4      /* Y-axis negative direction PWM output */
   #define Y_FAULT 5   /* 5 this is NOT an ENA output, this is a fault-line input */
-  
+
   #define ZP_PWM 9      /* Z-axis positive direction PWM output */
   #define ZM_PWM 7      /* Z-axis negative direction PWM output */
   #define Z_FAULT 8   /* 8 this is NOT an ENA output, this is a fault-line input */
-  
+
   #define XP_PWM 10     /* X-axis positive direction PWM output */
   #define XM_PWM 11     /* X-axis negative direction PWM output */
   #define X_FAULT 12   /* 12 this is NOT an ENA output, this is a fault-line input */
@@ -193,8 +193,8 @@
 
 #define MAX_PWM_LEVEL 255
 #define MIN_PWM_LEVEL 5
-  
-struct PID_MOTION 
+
+struct PID_MOTION
 {
   long int Kp;
   long int Ki;
@@ -225,5 +225,9 @@ extern int posEnabled;
 
 void motorsEnabled(void);
 void motorsDisabled(void);
+
+// publicly available wrapper functions for computing kinematics (defers to triangular functions).
+void  chainToPosition(float aChainLength, float bChainLength, float *x,float *y );
+void  positionToChain(float xTarget,float yTarget, float* aChainLength, float* bChainLength);
 
 #endif

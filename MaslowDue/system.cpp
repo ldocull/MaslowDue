@@ -25,7 +25,7 @@
 
   #define SPROCKET_RADIUS_MM      (10.1)
 
-  void  triangularInverse   (float xTarget,float yTarget, float* aChainLength, float* bChainLength);
+  void  triangularInverse(float xTarget,float yTarget, float* aChainLength, float* bChainLength);
   void  forwardKinematics(float chainALength, float chainBLength, float* xPos, float* yPos);
   void  triangular(float aChainLength, float bChainLength, float *x,float *y );
   void  recomputeGeometry(void);
@@ -60,6 +60,14 @@ void system_init()
     PCICR |= (1 << CONTROL_INT);   // Enable Pin Change Interrupt
   #endif
 }
+
+  void  chainToPosition(float aChainLength, float bChainLength, float *x,float *y ) {
+    return forwardKinematics(aChainLength, bChainLength, x, y);
+  }
+
+  void  positionToChain(float xTarget,float yTarget, float* aChainLength, float* bChainLength) {
+    return triangularInverse(xTarget, yTarget, aChainLength, bChainLength);
+  }
 
 
 // Returns control pin state as a uint8 bitfield. Each bit indicates the input pin state, where
@@ -514,9 +522,9 @@ uint8_t system_check_travel_limits(float *target)
   {
     float x_pos, y_pos;
 
-    triangular((float)(steps[LEFT_MOTOR]/settings.steps_per_mm[LEFT_MOTOR]),
-               (float)(steps[RIGHT_MOTOR]/settings.steps_per_mm[RIGHT_MOTOR]),
-                      &x_pos, &y_pos);
+    chainToPosition((float)(steps[LEFT_MOTOR]/settings.steps_per_mm[LEFT_MOTOR]),
+                    (float)(steps[RIGHT_MOTOR]/settings.steps_per_mm[RIGHT_MOTOR]),
+                    &x_pos, &y_pos);
 
     *x_steps = (int32_t) x_pos * settings.steps_per_mm[X_AXIS];
     *y_steps = (int32_t) y_pos * settings.steps_per_mm[Y_AXIS];
@@ -537,7 +545,7 @@ uint8_t system_check_travel_limits(float *target)
   }
 
 // limit motion to stay within table (in mm)
-  void verifyValidTarget(float* xTarget,float* yTarget)
+  void _verifyValidTarget(float* xTarget,float* yTarget)
   {
       recomputeGeometry();
 
@@ -550,7 +558,7 @@ uint8_t system_check_travel_limits(float *target)
   void triangularInverse(float xTarget,float yTarget, float* aChainLength, float* bChainLength)
   {
       //Confirm that the coordinates are on the table
-      verifyValidTarget(&xTarget, &yTarget);
+      _verifyValidTarget(&xTarget, &yTarget);
 
       //Set up variables
       float Chain1Angle = asin((_yCordOfMotor - yTarget)/Motor1Distance) + asin(R/Motor1Distance);

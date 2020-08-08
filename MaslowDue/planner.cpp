@@ -25,7 +25,7 @@
 #include "grbl.h"
 
 #ifdef MASLOWCNC
-  void triangularInverse(float xTarget,float yTarget, float* aChainLength, float* bChainLength);
+#include "MaslowDue.h"
 #endif
 
 static plan_block_t block_buffer[BLOCK_BUFFER_SIZE];  // A ring buffer for motion instructions
@@ -322,13 +322,13 @@ uint8_t plan_buffer_line(float *target, plan_line_data_t *pl_data)
   uint8_t idx;
 
   // Copy position data based on type of motion being planned.
-  if (block->condition & PL_COND_FLAG_SYSTEM_MOTION) { 
+  if (block->condition & PL_COND_FLAG_SYSTEM_MOTION) {
     #ifdef COREXY
       position_steps[X_AXIS] = system_convert_corexy_to_x_axis_steps(sys_position);
       position_steps[Y_AXIS] = system_convert_corexy_to_y_axis_steps(sys_position);
       position_steps[Z_AXIS] = sys_position[Z_AXIS];
     #else
-      memcpy(position_steps, sys_position, sizeof(sys_position)); 
+      memcpy(position_steps, sys_position, sizeof(sys_position));
     #endif
   } else { memcpy(position_steps, pl.position, sizeof(pl.position)); }
 
@@ -341,9 +341,9 @@ uint8_t plan_buffer_line(float *target, plan_line_data_t *pl_data)
 
   #ifdef MASLOWCNC
     float leftLen, rightLen;
-    // tranformation of target[X],[Y] in mm -- returns chain lengths in mm  
-    triangularInverse((float) (target[X_AXIS]),(float) (target[Y_AXIS]), &leftLen, &rightLen);
-    
+    // tranformation of target[X],[Y] in mm -- returns chain lengths in mm
+    positionToChain((float) (target[X_AXIS]),(float) (target[Y_AXIS]), &leftLen, &rightLen);
+
     target_steps[LEFT_MOTOR] = (int32_t) lround(leftLen * settings.steps_per_mm[LEFT_MOTOR]);
     block->steps[LEFT_MOTOR] = labs((target_steps[LEFT_MOTOR]-pl.position[LEFT_MOTOR]));
     block->step_event_count = max(block->step_event_count, block->steps[LEFT_MOTOR]);
@@ -355,7 +355,7 @@ uint8_t plan_buffer_line(float *target, plan_line_data_t *pl_data)
     block->millimeters += delta_mm*delta_mm;
 
     target_steps[RIGHT_MOTOR] = (int32_t) lround(rightLen * settings.steps_per_mm[RIGHT_MOTOR]);
-    block->steps[RIGHT_MOTOR] = labs((target_steps[RIGHT_MOTOR]-pl.position[RIGHT_MOTOR]));   
+    block->steps[RIGHT_MOTOR] = labs((target_steps[RIGHT_MOTOR]-pl.position[RIGHT_MOTOR]));
     block->step_event_count = max(block->step_event_count, block->steps[RIGHT_MOTOR]);
     delta_mm = (target_steps[RIGHT_MOTOR] - pl.position[RIGHT_MOTOR])/settings.steps_per_mm[RIGHT_MOTOR];
     unit_vec[RIGHT_MOTOR] = delta_mm; // Store unit vector numerator. Denominator computed later.
@@ -373,7 +373,7 @@ uint8_t plan_buffer_line(float *target, plan_line_data_t *pl_data)
     if (delta_mm < 0 ) { block->direction_bits |= get_direction_pin_mask(Z_AXIS); }
     // Incrementally compute total move distance by Euclidean norm. First add square of each term.
     block->millimeters += delta_mm*delta_mm;
-  
+
   #endif
 
   #ifndef MASLOWCNC
@@ -424,7 +424,7 @@ uint8_t plan_buffer_line(float *target, plan_line_data_t *pl_data)
 
   // Store programmed rate.
   if (block->condition & PL_COND_FLAG_RAPID_MOTION) { block->programmed_rate = block->rapid_rate; }
-  else { 
+  else {
     block->programmed_rate = pl_data->feed_rate;
     if (block->condition & PL_COND_FLAG_INVERSE_TIME) { block->programmed_rate *= block->millimeters; }
   }

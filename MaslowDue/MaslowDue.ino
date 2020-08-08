@@ -514,8 +514,6 @@ void loop()
  #ifdef TUNING_MODE
 // TEST stuff for using ascii terminal monitor to arrive at motor PID coefficients
     float t1,t2, xx, yy;
-    void  triangularInverse   (float xTarget,float yTarget, float* aChainLength, float* bChainLength);
-    void  triangular(float aChainLength, float bChainLength, float *x,float *y );
     void settings_restore(uint8_t restore_flag);
   void tuningLoop(void)
   {
@@ -613,7 +611,7 @@ void loop()
           recomputeGeometry();
           xx = DEBUG_COM_PORT.parseFloat();
           yy = DEBUG_COM_PORT.parseFloat();
-          triangularInverse(xx, yy, &t1, &t2);   // test kinematics
+          positionToChain(xx, yy, &t1, &t2);   // test kinematics
           DEBUG_COM_PORT.print("\n xx,yy = ");   // from x,y to Left/Right back to x,y
           DEBUG_COM_PORT.print(xx);
           DEBUG_COM_PORT.print(",");
@@ -623,8 +621,7 @@ void loop()
           DEBUG_COM_PORT.print(",");
           DEBUG_COM_PORT.print(t2);
 
-          triangular(t1, t2, &xx, &yy);
-          //forwardKinematics(t1, t2, &xx, &yy );
+          chainToPosition(t1, t2, &xx, &yy);
           DEBUG_COM_PORT.print(" <= L,R: ");
           DEBUG_COM_PORT.print(t1);
           DEBUG_COM_PORT.print(",");

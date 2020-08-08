@@ -52,7 +52,7 @@ static void report_util_setting_string(uint8_t n) {
   serial_write('(');
   switch(n) {
     case 0: printPgmString(PSTR("stp pulse")); break;
-    case 1: printPgmString(PSTR("idl delay")); break; 
+    case 1: printPgmString(PSTR("idl delay")); break;
     case 2: printPgmString(PSTR("stp inv")); break;
     case 3: printPgmString(PSTR("dir inv")); break;
     case 4: printPgmString(PSTR("stp en inv")); break;
@@ -93,20 +93,20 @@ static void report_util_setting_string(uint8_t n) {
 }
 */
 
-static void report_util_uint8_setting(uint8_t n, int val) { 
-  report_util_setting_prefix(n); 
-  print_uint8_base10(val); 
-  report_util_line_feed(); // report_util_setting_string(n); 
+static void report_util_uint8_setting(uint8_t n, int val) {
+  report_util_setting_prefix(n);
+  print_uint8_base10(val);
+  report_util_line_feed(); // report_util_setting_string(n);
 }
 
-static void report_util_uint32_setting(uint8_t n, int val) { 
-  report_util_setting_prefix(n); 
-  print_uint32_base10(val); 
-  report_util_line_feed(); // report_util_setting_string(n); 
+static void report_util_uint32_setting(uint8_t n, int val) {
+  report_util_setting_prefix(n);
+  print_uint32_base10(val);
+  report_util_line_feed(); // report_util_setting_string(n);
 }
 
-static void report_util_float_setting(uint8_t n, float val, uint8_t n_decimal) { 
-  report_util_setting_prefix(n); 
+static void report_util_float_setting(uint8_t n, float val, uint8_t n_decimal) {
+  report_util_setting_prefix(n);
   printFloat(val,n_decimal);
   report_util_line_feed(); // report_util_setting_string(n);
 }
@@ -183,7 +183,7 @@ void report_init_message()
 
 // Grbl help message
 void report_grbl_help() {
-  printPgmString(PSTR("[HLP:$$ $# $G $I $N $x=val $Nx=line $J=line $SLP $C $X $H ~ ! ? ctrl-x]\r\n"));    
+  printPgmString(PSTR("[HLP:$$ $# $G $I $N $x=val $Nx=line $J=line $SLP $C $X $H ~ ! ? ctrl-x]\r\n"));
 }
 
 
@@ -241,7 +241,14 @@ void report_grbl_settings() {
     report_util_float_setting(84,settings.motorOffsetY,N_DECIMAL_SETTINGVALUE);
     report_util_float_setting(85,settings.XcorrScaling,N_DECIMAL_SETTINGVALUE);
     report_util_float_setting(86,settings.YcorrScaling,N_DECIMAL_SETTINGVALUE);
-    
+
+    report_util_float_setting(87,settings.chainSagCorrection,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(88,settings.leftChainTolerance,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(89,settings.rightChainTolerance,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(90,settings.rotationDiskRadius,N_DECIMAL_SETTINGVALUE);
+
+    report_util_float_setting(91,settings.chainLength,N_DECIMAL_SETTINGVALUE);
+
     #endif
 
   // Print axis settings
@@ -338,8 +345,8 @@ void report_gcode_modes()
     switch (gc_state.modal.program_flow) {
       case PROGRAM_FLOW_PAUSED : serial_write('0'); break;
       // case PROGRAM_FLOW_OPTIONAL_STOP : serial_write('1'); break; // M1 is ignored and not supported.
-      case PROGRAM_FLOW_COMPLETED_M2 : 
-      case PROGRAM_FLOW_COMPLETED_M30 : 
+      case PROGRAM_FLOW_COMPLETED_M2 :
+      case PROGRAM_FLOW_COMPLETED_M30 :
         print_uint8_base10(gc_state.modal.program_flow);
         break;
     }
@@ -359,12 +366,12 @@ void report_gcode_modes()
   } else { serial_write('9'); }
 
   #ifdef ENABLE_PARKING_OVERRIDE_CONTROL
-    if (sys.override_ctrl == OVERRIDE_PARKING_MOTION) { 
+    if (sys.override_ctrl == OVERRIDE_PARKING_MOTION) {
       report_util_gcode_modes_M();
       print_uint8_base10(56);
     }
   #endif
-  
+
   printPgmString(PSTR(" T"));
   print_uint8_base10(gc_state.tool);
 
@@ -631,7 +638,7 @@ void report_realtime_status()
         }
         if (cl_state & COOLANT_STATE_FLOOD) { serial_write('F'); }
         if (cl_state & COOLANT_STATE_MIST) { serial_write('M'); }
-      }  
+      }
     }
   #endif
 

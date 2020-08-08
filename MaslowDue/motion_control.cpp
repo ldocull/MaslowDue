@@ -24,7 +24,7 @@
 #include "grbl.h"
 
 #ifdef MASLOWCNC
-void triangularInverse(float xTarget,float yTarget, float* aChainLength, float* bChainLength);
+#include "MaslowDue.h"
 #endif
 
 
@@ -71,16 +71,16 @@ void mc_line(float *target, plan_line_data_t *pl_data)
   } while (1);
 
   #ifdef MASLOWCNC
-//  MASLOW is circular in motion, so long lines must be divided up 
-    float cpos[N_AXIS]; 
+//  MASLOW is circular in motion, so long lines must be divided up
+    float cpos[N_AXIS];
 
     cpos[X_AXIS] = (gc_state.position[X_AXIS]); // / settings.steps_per_mm[X_AXIS]);
     cpos[Y_AXIS] = (gc_state.position[Y_AXIS]); // / settings.steps_per_mm[Y_AXIS]);
     cpos[Z_AXIS] = (gc_state.position[Z_AXIS]); // / settings.steps_per_mm[Z_AXIS]);
 
     float deltax = target[X_AXIS] - cpos[X_AXIS]; // working in mm position
-    float deltay = target[Y_AXIS] - cpos[Y_AXIS]; 
-    float deltaz = target[Z_AXIS] - cpos[Z_AXIS]; 
+    float deltay = target[Y_AXIS] - cpos[Y_AXIS];
+    float deltaz = target[Z_AXIS] - cpos[Z_AXIS];
 
     if((abs(deltax) > (float)(0.0)) || (abs(deltay) > (float)0.0))  // don't segment z-only moves
     {
@@ -93,13 +93,13 @@ void mc_line(float *target, plan_line_data_t *pl_data)
       float dy = deltay / (float)segs;
       float dz = deltaz / (float)segs;
 
-      // if (invert_feed_rate) 
-      // { 
-      //     feed_rate *= segs; 
+      // if (invert_feed_rate)
+      // {
+      //     feed_rate *= segs;
       // } // compensate feedrate for multiple segments
-      
+
       while(segs-- > 0)  // break up line into short pieces
-      {  
+      {
         cpos[X_AXIS] += dx;
         cpos[Y_AXIS] += dy;
         cpos[Z_AXIS] += dz;
@@ -123,7 +123,7 @@ void mc_line(float *target, plan_line_data_t *pl_data)
           }
       }
       }
-    } 
+    }
     else
     {
       // Plan and queue motion into planner buffer
@@ -137,7 +137,7 @@ void mc_line(float *target, plan_line_data_t *pl_data)
         }
       }
     }
-     
+
   #else
 
     // Plan and queue motion into planner buffer
@@ -190,11 +190,11 @@ void mc_arc(float *target, plan_line_data_t *pl_data, float *position, float *of
     // Multiply inverse feed_rate to compensate for the fact that this movement is approximated
     // by a number of discrete segments. The inverse feed_rate should be correct for the sum of
     // all segments.
-    if (pl_data->condition & PL_COND_FLAG_INVERSE_TIME) { 
-      pl_data->feed_rate *= segments; 
+    if (pl_data->condition & PL_COND_FLAG_INVERSE_TIME) {
+      pl_data->feed_rate *= segments;
       bit_false(pl_data->condition,PL_COND_FLAG_INVERSE_TIME); // Force as feed absolute mode over arc segments.
     }
-    
+
     float theta_per_segment = angular_travel/segments;
     float linear_per_segment = (target[axis_linear] - position[axis_linear])/segments;
 
@@ -297,7 +297,7 @@ void mc_homing_cycle(uint8_t cycle_mask)
 
   // -------------------------------------------------------------------------------------
   // Perform homing routine. NOTE: Special motion case. Only system reset works.
-  
+
   #ifdef HOMING_SINGLE_AXIS_COMMANDS
     if (cycle_mask) { limits_go_home(cycle_mask); } // Perform homing cycle based on mask.
     else
@@ -456,7 +456,7 @@ void mc_reset()
     // violated, by which, all bets are off.
     if ((sys.state & (STATE_CYCLE | STATE_HOMING | STATE_JOG)) ||
     		(sys.step_control & (STEP_CONTROL_EXECUTE_HOLD | STEP_CONTROL_EXECUTE_SYS_MOTION))) {
-      if (sys.state == STATE_HOMING) { 
+      if (sys.state == STATE_HOMING) {
         if (!sys_rt_exec_alarm) {system_set_exec_alarm(EXEC_ALARM_HOMING_FAIL_RESET); }
       } else { system_set_exec_alarm(EXEC_ALARM_ABORT_CYCLE); }
       st_go_idle(); // Force kill steppers. Position has likely been lost.
