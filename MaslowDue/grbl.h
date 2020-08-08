@@ -27,17 +27,30 @@
 #define GRBL_VERSION "1.1g"
 
 
-// Enable Maslow CNC kinematics. Use ONLY with Maslow machines. 
+// Enable Maslow CNC kinematics. Use ONLY with Maslow machines.
 // NOTE: This configuration option alters the motion of the X and Y axes to principle of operation
 // defined at (https://en.wikipedia.org/wiki/Maslow_CNC). Motors are assumed to positioned and wired exactly as
 // described, if not, motions may move in strange directions. Grbl requires the Maslow LEFT and RIGHT motors
 // have the same steps per mm internally.
 #define MASLOWCNC // Default disabled. Uncomment to enable.
 
-
 #ifdef MASLOWCNC
   #define GRBL_VERSION_BUILD "20190407.MazDue"
   #include "Arduino.h"
+
+  #define GRBL_CHAIN_OVER_SPROCKET              80
+  #define GRBL_MACHINE_WIDTH                    81
+  #define GRBL_MACHINE_HEIGHT                   82
+  #define GRBL_DIST_BETWEEN_MOTORS              83
+  #define GRBL_MOTOR_OFFSET_Y                   84
+  #define GRBL_X_CORR_SCALING                   85
+  #define GRBL_Y_CORR_SCALING                   86
+  #define GRBL_CHAIN_SAG_CORRECTION             87
+  #define GRBL_LEFT_CHAIN_TOLERANCE             88
+  #define GRBL_RIGHT_CHAIN_TOLERANCE            89
+  #define GRBL_ROTATION_DISK_RADIUS             90
+  #define GRBL_CHAIN_LENGTH                     91
+  #define GRBL_Z_MIN                            92
 #else
   #define GRBL_VERSION_BUILD "20180813.Mega"
   #include <avr/io.h>

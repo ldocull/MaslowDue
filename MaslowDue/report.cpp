@@ -37,7 +37,7 @@ static void report_util_line_feed() { printPgmString(PSTR("\r\n")); }
 static void report_util_feedback_line_feed() { serial_write(']'); report_util_line_feed(); }
 static void report_util_gcode_modes_G() { printPgmString(PSTR(" G")); }
 static void report_util_gcode_modes_M() { printPgmString(PSTR(" M")); }
-// static void report_util_comment_line_feed() { serial_write(')'); report_util_line_feed(); }
+static void report_util_comment_line_feed() { serial_write(')'); report_util_line_feed(); }
 static void report_util_axis_values(float *axis_value) {
   uint8_t idx;
   for (idx=0; idx<N_AXIS; idx++) {
@@ -46,69 +46,46 @@ static void report_util_axis_values(float *axis_value) {
   }
 }
 
-/*
 static void report_util_setting_string(uint8_t n) {
-  serial_write(' ');
-  serial_write('(');
   switch(n) {
-    case 0: printPgmString(PSTR("stp pulse")); break;
-    case 1: printPgmString(PSTR("idl delay")); break;
-    case 2: printPgmString(PSTR("stp inv")); break;
-    case 3: printPgmString(PSTR("dir inv")); break;
-    case 4: printPgmString(PSTR("stp en inv")); break;
-    case 5: printPgmString(PSTR("lim inv")); break;
-    case 6: printPgmString(PSTR("prb inv")); break;
-    case 10: printPgmString(PSTR("rpt")); break;
-    case 11: printPgmString(PSTR("jnc dev")); break;
-    case 12: printPgmString(PSTR("arc tol")); break;
-    case 13: printPgmString(PSTR("rpt inch")); break;
-    case 20: printPgmString(PSTR("sft lim")); break;
-    case 21: printPgmString(PSTR("hrd lim")); break;
-    case 22: printPgmString(PSTR("hm cyc")); break;
-    case 23: printPgmString(PSTR("hm dir inv")); break;
-    case 24: printPgmString(PSTR("hm feed")); break;
-    case 25: printPgmString(PSTR("hm seek")); break;
-    case 26: printPgmString(PSTR("hm delay")); break;
-    case 27: printPgmString(PSTR("hm pulloff")); break;
-    case 30: printPgmString(PSTR("rpm max")); break;
-    case 31: printPgmString(PSTR("rpm min")); break;
-    case 32: printPgmString(PSTR("laser")); break;
-    default:
-      n -= AXIS_SETTINGS_START_VAL;
-      uint8_t idx = 0;
-      while (n >= AXIS_SETTINGS_INCREMENT) {
-        n -= AXIS_SETTINGS_INCREMENT;
-        idx++;
-      }
-      serial_write(n+'x');
-      switch (idx) {
-        case 0: printPgmString(PSTR(":stp/mm")); break;
-        case 1: printPgmString(PSTR(":mm/min")); break;
-        case 2: printPgmString(PSTR(":mm/s^2")); break;
-        case 3: printPgmString(PSTR(":mm max")); break;
-      }
-      break;
+#ifdef MASLOWCNC
+    case GRBL_CHAIN_OVER_SPROCKET: printPgmString(PSTR(" (chain over sprocket)")); break;
+    case GRBL_MACHINE_WIDTH: printPgmString(PSTR(" (machine width)")); break;
+    case GRBL_MACHINE_HEIGHT: printPgmString(PSTR(" (machine height)")); break;
+    case GRBL_DIST_BETWEEN_MOTORS: printPgmString(PSTR(" (dist between motors)")); break;
+    case GRBL_MOTOR_OFFSET_Y: printPgmString(PSTR(" (motor offset y)")); break;
+    case GRBL_X_CORR_SCALING: printPgmString(PSTR(" (x corr scaling)")); break;
+    case GRBL_Y_CORR_SCALING: printPgmString(PSTR(" (y corr scaling)")); break;
+    case GRBL_CHAIN_SAG_CORRECTION: printPgmString(PSTR(" (chain sag correction)")); break;
+    case GRBL_LEFT_CHAIN_TOLERANCE: printPgmString(PSTR(" (left chain tolerance)")); break;
+    case GRBL_RIGHT_CHAIN_TOLERANCE: printPgmString(PSTR(" (right chain tolerance)")); break;
+    case GRBL_ROTATION_DISK_RADIUS: printPgmString(PSTR(" (rotation disk radius)")); break;
+    case GRBL_CHAIN_LENGTH: printPgmString(PSTR(" (chain length)")); break;
+    case GRBL_Z_MIN: printPgmString(PSTR(" (z minimum)")); break;
+#endif
+    default: break;
   }
-  report_util_comment_line_feed();
 }
-*/
 
 static void report_util_uint8_setting(uint8_t n, int val) {
   report_util_setting_prefix(n);
   print_uint8_base10(val);
-  report_util_line_feed(); // report_util_setting_string(n);
+  report_util_setting_string(n);
+  report_util_line_feed();
 }
 
 static void report_util_uint32_setting(uint8_t n, int val) {
   report_util_setting_prefix(n);
   print_uint32_base10(val);
-  report_util_line_feed(); // report_util_setting_string(n);
+  report_util_setting_string(n);
+  report_util_line_feed();
 }
 
 static void report_util_float_setting(uint8_t n, float val, uint8_t n_decimal) {
   report_util_setting_prefix(n);
   printFloat(val,n_decimal);
-  report_util_line_feed(); // report_util_setting_string(n);
+  report_util_setting_string(n);
+  report_util_line_feed();
 }
 
 
@@ -234,20 +211,21 @@ void report_grbl_settings() {
     report_util_uint32_setting(62,settings.z_PID_Kd );
     report_util_uint32_setting(63,settings.z_PID_Imax );
 
-    report_util_uint32_setting(80,settings.chainOverSprocket );
-    report_util_float_setting(81,settings.machineWidth,N_DECIMAL_SETTINGVALUE);
-    report_util_float_setting(82,settings.machineHeight,N_DECIMAL_SETTINGVALUE);
-    report_util_float_setting(83,settings.distBetweenMotors,N_DECIMAL_SETTINGVALUE);
-    report_util_float_setting(84,settings.motorOffsetY,N_DECIMAL_SETTINGVALUE);
-    report_util_float_setting(85,settings.XcorrScaling,N_DECIMAL_SETTINGVALUE);
-    report_util_float_setting(86,settings.YcorrScaling,N_DECIMAL_SETTINGVALUE);
+    report_util_uint32_setting(GRBL_CHAIN_OVER_SPROCKET,settings.chainOverSprocket );
+    report_util_float_setting(GRBL_MACHINE_WIDTH,settings.machineWidth,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(GRBL_MACHINE_HEIGHT,settings.machineHeight,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(GRBL_DIST_BETWEEN_MOTORS,settings.distBetweenMotors,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(GRBL_MOTOR_OFFSET_Y,settings.motorOffsetY,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(GRBL_X_CORR_SCALING,settings.XcorrScaling,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(GRBL_Y_CORR_SCALING,settings.YcorrScaling,N_DECIMAL_SETTINGVALUE);
 
-    report_util_float_setting(87,settings.chainSagCorrection,N_DECIMAL_SETTINGVALUE);
-    report_util_float_setting(88,settings.leftChainTolerance,N_DECIMAL_SETTINGVALUE);
-    report_util_float_setting(89,settings.rightChainTolerance,N_DECIMAL_SETTINGVALUE);
-    report_util_float_setting(90,settings.rotationDiskRadius,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(GRBL_CHAIN_SAG_CORRECTION,settings.chainSagCorrection,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(GRBL_LEFT_CHAIN_TOLERANCE,settings.leftChainTolerance,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(GRBL_RIGHT_CHAIN_TOLERANCE,settings.rightChainTolerance,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(GRBL_ROTATION_DISK_RADIUS,settings.rotationDiskRadius,N_DECIMAL_SETTINGVALUE);
 
-    report_util_float_setting(91,settings.chainLength,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(GRBL_CHAIN_LENGTH,settings.chainLength,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(GRBL_Z_MIN,settings.zMin,N_DECIMAL_SETTINGVALUE);
 
     #endif
 

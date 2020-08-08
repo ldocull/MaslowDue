@@ -92,7 +92,9 @@ settings_t settings;
     .sledWidth = default_sledWidth,
 
     .XcorrScaling = default_XcorrScaling,
-    .YcorrScaling = default_YcorrScaling };
+    .YcorrScaling = default_YcorrScaling,
+
+    .zMin = default_ZMin };
 
 #else
 
@@ -382,21 +384,22 @@ uint8_t settings_store_global_setting(uint8_t parameter, float value) {
         case 62: settings.z_PID_Kd = (uint32_t)value ; break;
         case 63: settings.z_PID_Imax = (uint32_t)value ; break;
 
-        case 80: settings.chainOverSprocket = (uint32_t)value ; break;
-        case 81: settings.machineWidth = (float)value ; break;   /* Maslow specific settings */
-        case 82: settings.machineHeight = (float)value ; break;
-        case 83: settings.distBetweenMotors = (float)value ; break;
-        case 84: settings.motorOffsetY = (float)value ; break;
+        case GRBL_CHAIN_OVER_SPROCKET: settings.chainOverSprocket = (uint32_t)value ; break;
+        case GRBL_MACHINE_WIDTH: settings.machineWidth = (float)value ; break;
+        case GRBL_MACHINE_HEIGHT: settings.machineHeight = (float)value ; break;
+        case GRBL_DIST_BETWEEN_MOTORS: settings.distBetweenMotors = (float)value ; break;
+        case GRBL_MOTOR_OFFSET_Y: settings.motorOffsetY = (float)value ; break;
 
-        case 85: settings.XcorrScaling = (float)value ; break;
-        case 86: settings.YcorrScaling = (float)value ; break;
+        case GRBL_X_CORR_SCALING: settings.XcorrScaling = (float)value ; break;
+        case GRBL_Y_CORR_SCALING: settings.YcorrScaling = (float)value ; break;
 
-        case 87: settings.chainSagCorrection = (float)value ; break;
-        case 88: settings.leftChainTolerance = (float)value ; break;
-        case 89: settings.rightChainTolerance = (float)value ; break;
-        case 90: settings.rotationDiskRadius = (float)value ; break;
+        case GRBL_CHAIN_SAG_CORRECTION: settings.chainSagCorrection = (float)value ; break;
+        case GRBL_LEFT_CHAIN_TOLERANCE: settings.leftChainTolerance = (float)value ; break;
+        case GRBL_RIGHT_CHAIN_TOLERANCE: settings.rightChainTolerance = (float)value ; break;
+        case GRBL_ROTATION_DISK_RADIUS: settings.rotationDiskRadius = (float)value ; break;
 
-        case 91: settings.chainLength = (float)value ; break;
+        case GRBL_CHAIN_LENGTH: settings.chainLength = (float)value ; break;
+        case GRBL_Z_MIN: settings.zMin = (float)value; break;
       #endif
 
       default:

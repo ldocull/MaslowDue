@@ -23,8 +23,6 @@
 #ifdef MASLOWCNC
   #include "MaslowDue.h"
 
-  #define SPROCKET_RADIUS_MM      (10.1)
-
   #define KINEMATICSMAXGUESS 200
   // #define KINEMATICSDBG 1 // output to serial while computing kinematics.
   #define KINEMATICSMAXERR 0.1 // maximum error value in forward kinematics. bigger = faster.
@@ -34,13 +32,9 @@
   void  forwardKinematics(float chainALength, float chainBLength, float* xPos, float* yPos);
   void  triangular(float aChainLength, float bChainLength, float *x,float *y );
   void _recomputeGeometry(void);
-  void _verifyValidTarget(float* xTarget,float* yTarget);
 
   // Various cached pre-computed values.
-  float height_to_bit; //distance between sled attach point and bit
-  float R = SPROCKET_RADIUS_MM;                      //sprocket radius
-  float halfWidth;                     //Half the machine width
-  float halfHeight;                    //Half the machine height
+  float _sprocketRadius = 10.1f;                      //sprocket radius
   float _xCordOfMotor;
   float _yCordOfMotor;
 
@@ -387,6 +381,15 @@ uint8_t system_check_travel_limits(float *target)
       } else {
         if (target[idx] > 0 || target[idx] < settings.max_travel[idx]) { return(true); }
       }
+    #elif defined(MASLOWCNC)
+      if (idx == Z_AXIS) {
+        // Maslow has a min Z setting in addition to the max Z.
+        if (target[idx] < settings.zMin || target[idx] > -settings.max_travel[idx]) { return(true); }
+      } else {
+        // Maslow homes at the center of the stock. The max travel setting refers to total size.
+        float ht = settings.max_travel[idx] / -2.0f;
+        if (target[idx] < -ht || target[idx] > ht) { return(true); }
+      }
     #else
       // NOTE: max_travel is stored as negative
       if (target[idx] > 0 || target[idx] < settings.max_travel[idx]) { return(true); }
@@ -428,17 +431,11 @@ uint8_t system_check_travel_limits(float *target)
       Some variables are computed on class creation for the geometry of the machine to reduce overhead,
       calling this function regenerates those values.
       */
-      halfWidth = (settings.machineWidth / 2.0);
-      halfHeight = (settings.machineHeight / 2.0);
       _xCordOfMotor = (settings.distBetweenMotors/2);
-      _yCordOfMotor = (halfHeight + settings.motorOffsetY);
+      _yCordOfMotor = ((settings.machineHeight / 2.0) + settings.motorOffsetY);
 
     #if defined (KINEMATICSDBG) && KINEMATICSDBG > 0
-      Serial.print(F("Message: recomputeGeometry(), halfSize: "));
-      Serial.print(halfWidth);
-      Serial.print(',');
-      Serial.print(halfHeight);
-      Serial.print(F("; motor position: "));
+      Serial.print(F("Message: recomputeGeometry(), motor position: "));
       Serial.print(_xCordOfMotor);
       Serial.print(',');
       Serial.println(_yCordOfMotor);
@@ -566,49 +563,42 @@ uint8_t system_check_travel_limits(float *target)
     return(y_steps);
   }
 
-  // limit motion to stay within table (in mm)
-  void _verifyValidTarget(float* xTarget, float* yTarget)
-  {
-     // *xTarget = (*xTarget < -halfWidth) ? -halfWidth : (*xTarget > halfWidth) ? halfWidth : *xTarget;
-     // *yTarget = (*yTarget < -halfHeight) ? -halfHeight : (*yTarget > halfHeight) ? halfHeight : *yTarget;
-  }
-
   // calculate left and right (LEFT_MOTOR/RIGHT_MOTOR) chain lengths from X-Y cartesian coordinates  (in mm)
   // target is an absolute position in the frame
   void triangularInverse(float xTarget, float yTarget, float* aChainLength, float* bChainLength)
   {
-      //Confirm that the coordinates are on the table
-      _verifyValidTarget(&xTarget, &yTarget);
-
       // scale target (absolute position) by any correction factor
+      // Use double math internally for faster computation.
       double xxx = (double)xTarget * (double)settings.XcorrScaling;
       double yyy = (double)yTarget * (double)settings.YcorrScaling;
 
       //Calculate motor axes length to the bit
-      float Motor1Distance = sqrt(pow((double)(-1*_xCordOfMotor) - (double)(xxx),2)+pow((double)(_yCordOfMotor) - (double(yyy)),2));
-      float Motor2Distance = sqrt(pow((double)   (_xCordOfMotor) - (double)(xxx),2)+pow((double)(_yCordOfMotor) - (double)(yyy),2));
+      double Motor1Distance = sqrt(pow((double)(-1*_xCordOfMotor) - (double)(xxx),2)+pow((double)(_yCordOfMotor) - (double(yyy)),2));
+      double Motor2Distance = sqrt(pow((double)   (_xCordOfMotor) - (double)(xxx),2)+pow((double)(_yCordOfMotor) - (double)(yyy),2));
 
       // Assumes that the chain is over the sprocket (under is not supported)
-      float Chain1Angle = asin((_yCordOfMotor - yTarget)/Motor1Distance) + asin(R/Motor1Distance);
-      float Chain2Angle = asin((_yCordOfMotor - yTarget)/Motor2Distance) + asin(R/Motor2Distance);
-      float Chain1AroundSprocket = R * Chain1Angle;
-      float Chain2AroundSprocket = R * Chain2Angle;
+      double Chain1Angle = asin((_yCordOfMotor - yTarget)/Motor1Distance) + asin(_sprocketRadius/Motor1Distance);
+      double Chain2Angle = asin((_yCordOfMotor - yTarget)/Motor2Distance) + asin(_sprocketRadius/Motor2Distance);
+      double Chain1AroundSprocket = _sprocketRadius * Chain1Angle;
+      double Chain2AroundSprocket = _sprocketRadius * Chain2Angle;
 
       //Calculate the straight chain length from the sprocket to the bit
-      float Chain1Straight = sqrt(pow(Motor1Distance,2)-pow(R,2));
-      float Chain2Straight = sqrt(pow(Motor2Distance,2)-pow(R,2));
+      double srsqrd = pow(_sprocketRadius,2);
+      double Chain1Straight = sqrt(pow(Motor1Distance,2)-srsqrd);
+      double Chain2Straight = sqrt(pow(Motor2Distance,2)-srsqrd);
 
       //Correct the straight chain lengths to account for chain sag
-      Chain1Straight *= (1 + ((settings.chainSagCorrection / 1000000000000) * pow(cos(Chain1Angle),2) * pow(Chain1Straight,2) * pow((tan(Chain2Angle) * cos(Chain1Angle)) + sin(Chain1Angle),2)));
-      Chain2Straight *= (1 + ((settings.chainSagCorrection / 1000000000000) * pow(cos(Chain2Angle),2) * pow(Chain2Straight,2) * pow((tan(Chain1Angle) * cos(Chain2Angle)) + sin(Chain2Angle),2)));
+      double csc = (settings.chainSagCorrection / 1000000000000);
+      Chain1Straight *= (1 + (csc * pow(cos(Chain1Angle),2) * pow(Chain1Straight,2) * pow((tan(Chain2Angle) * cos(Chain1Angle)) + sin(Chain1Angle),2)));
+      Chain2Straight *= (1 + (csc * pow(cos(Chain2Angle),2) * pow(Chain2Straight,2) * pow((tan(Chain1Angle) * cos(Chain2Angle)) + sin(Chain2Angle),2)));
 
       //Calculate total chain lengths accounting for sprocket geometry and chain sag
-      float Chain1 = Chain1AroundSprocket + Chain1Straight / (1.0f + settings.leftChainTolerance / 100.0f);
-      float Chain2 = Chain2AroundSprocket + Chain2Straight / (1.0f + settings.rightChainTolerance / 100.0f);
+      double Chain1 = Chain1AroundSprocket + Chain1Straight / (1.0f + settings.leftChainTolerance / 100.0f);
+      double Chain2 = Chain2AroundSprocket + Chain2Straight / (1.0f + settings.rightChainTolerance / 100.0f);
 
       //Subtract of the virtual length which is added to the chain by the rotation mechanism
-      *aChainLength = Chain1 - settings.rotationDiskRadius;
-      *bChainLength = Chain2 - settings.rotationDiskRadius;
+      *aChainLength = (float)(Chain1 - settings.rotationDiskRadius);
+      *bChainLength = (float)(Chain2 - settings.rotationDiskRadius);
   }
 
 #endif

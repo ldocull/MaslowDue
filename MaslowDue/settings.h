@@ -134,7 +134,7 @@ typedef struct {
     uint32_t z_PID_Ki;
     uint32_t z_PID_Kd;
     uint32_t z_PID_Imax;
-    
+
     uint32_t chainOverSprocket;
     float machineWidth;   /* Maslow specific settings */
     float machineHeight;
@@ -146,12 +146,13 @@ typedef struct {
     float rotationDiskRadius;
     float chainLength;
     float sledHeight;
-    float sledWidth;  
+    float sledWidth;
 
     float XcorrScaling;
     float YcorrScaling;
+    float zMin;
   #endif
-    
+
 
 } settings_t;
 extern settings_t settings;
