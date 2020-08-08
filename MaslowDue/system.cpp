@@ -43,15 +43,6 @@
   float halfHeight;                    //Half the machine height
   float _xCordOfMotor;
   float _yCordOfMotor;
-
-  // Motor axes length to the bit for triangular kinematics
-  float Motor1Distance; //left motor axis distance to sled
-  float Motor2Distance; //right motor axis distance to sled
-
-  // output = chain lengths measured from 12 o'clock
-  float Chain1; //left chain length
-  float Chain2; //right chain length
-
 #endif
 
 void system_init()
@@ -414,7 +405,7 @@ uint8_t system_check_travel_limits(float *target)
       Serial.print(F("; (guess) position: "));
       Serial.print(*x);
       Serial.print(',');
-      Serial.print(*y);
+      Serial.println(*y);
     #endif
 
     return forwardKinematics(aChainLength, bChainLength, x, y);
@@ -446,7 +437,7 @@ uint8_t system_check_travel_limits(float *target)
       Serial.print(F("; motor position: "));
       Serial.print(_xCordOfMotor);
       Serial.print(',');
-      Serial.print(_yCordOfMotor);
+      Serial.println(_yCordOfMotor);
     #endif
   }
 
@@ -502,20 +493,10 @@ uint8_t system_check_travel_limits(float *target)
         float bChainError = chainBLength - guessLengthB;
 
         //adjust the guess based on the result
-        xGuess = xGuess + .1*aChainError - .1*bChainError;
-        yGuess = yGuess - .1*aChainError - .1*bChainError;
+        xGuess = xGuess + .1f*aChainError - .1f*bChainError;
+        yGuess = yGuess - .1f*aChainError - .1f*bChainError;
 
         guessCount++;
-
-        #if defined (KINEMATICSDBG) && KINEMATICSDBG > 0
-          Serial.print(F("[PEk:"));
-          Serial.print(aChainError);
-          Serial.print(',');
-          Serial.print(bChainError);
-          Serial.print(',');
-          Serial.print('0');
-          Serial.println(F("]"));
-        #endif
 
         //if we've converged on the point...or it's time to give up, exit the loop
         if ((abs(aChainError) <= KINEMATICSMAXERR && abs(bChainError) <= KINEMATICSMAXERR) or
@@ -529,7 +510,7 @@ uint8_t system_check_travel_limits(float *target)
               Serial.print(',');
               Serial.print(guessLengthB);
               Serial.print(F("; guessCount: "));
-              Serial.print(guessCount);
+              Serial.println(guessCount);
             #endif
 
             if((guessCount > KINEMATICSMAXGUESS) or guessLengthA > settings.chainLength or guessLengthB > settings.chainLength){
@@ -584,8 +565,8 @@ uint8_t system_check_travel_limits(float *target)
   // limit motion to stay within table (in mm)
   void _verifyValidTarget(float* xTarget, float* yTarget)
   {
-     *xTarget = (*xTarget < -halfWidth) ? -halfWidth : (*xTarget > halfWidth) ? halfWidth : *xTarget;
-     *yTarget = (*yTarget < -halfHeight) ? -halfHeight : (*yTarget > halfHeight) ? halfHeight : *yTarget;
+     // *xTarget = (*xTarget < -halfWidth) ? -halfWidth : (*xTarget > halfWidth) ? halfWidth : *xTarget;
+     // *yTarget = (*yTarget < -halfHeight) ? -halfHeight : (*yTarget > halfHeight) ? halfHeight : *yTarget;
   }
 
   // calculate left and right (LEFT_MOTOR/RIGHT_MOTOR) chain lengths from X-Y cartesian coordinates  (in mm)
@@ -595,15 +576,19 @@ uint8_t system_check_travel_limits(float *target)
       //Confirm that the coordinates are on the table
       _verifyValidTarget(&xTarget, &yTarget);
 
-      //Set up variables
+      // scale target (absolute position) by any correction factor
+      double xxx = (double)xTarget * (double)settings.XcorrScaling;
+      double yyy = (double)yTarget * (double)settings.YcorrScaling;
+
+      //Calculate motor axes length to the bit
+      float Motor1Distance = sqrt(pow((double)(-1*_xCordOfMotor) - (double)(xxx),2)+pow((double)(_yCordOfMotor) - (double(yyy)),2));
+      float Motor2Distance = sqrt(pow((double)   (_xCordOfMotor) - (double)(xxx),2)+pow((double)(_yCordOfMotor) - (double)(yyy),2));
+
+      // Assumes that the chain is over the sprocket (under is not supported)
       float Chain1Angle = asin((_yCordOfMotor - yTarget)/Motor1Distance) + asin(R/Motor1Distance);
       float Chain2Angle = asin((_yCordOfMotor - yTarget)/Motor2Distance) + asin(R/Motor2Distance);
       float Chain1AroundSprocket = R * Chain1Angle;
       float Chain2AroundSprocket = R * Chain2Angle;
-
-      //Calculate motor axes length to the bit
-      float Motor1Distance = sqrt(pow((-1*_xCordOfMotor - xTarget),2)+pow((_yCordOfMotor - yTarget),2));
-      float Motor2Distance = sqrt(pow((_xCordOfMotor - xTarget),2)+pow((_yCordOfMotor - yTarget),2));
 
       //Calculate the straight chain length from the sprocket to the bit
       float Chain1Straight = sqrt(pow(Motor1Distance,2)-pow(R,2));
@@ -618,24 +603,8 @@ uint8_t system_check_travel_limits(float *target)
       float Chain2 = Chain2AroundSprocket + Chain2Straight / (1.0f + settings.rightChainTolerance / 100.0f);
 
       //Subtract of the virtual length which is added to the chain by the rotation mechanism
-      Chain1 = Chain1 - settings.rotationDiskRadius;
-      Chain2 = Chain2 - settings.rotationDiskRadius;
-
-      *aChainLength = Chain1;
-      *bChainLength = Chain2;
-
-
-      // // scale target (absolute position) by any correction factor
-      // double xxx = (double)xTarget * (double)settings.XcorrScaling;
-      // double yyy = (double)yTarget * (double)settings.YcorrScaling;
-
-      // //Calculate motor axes length to the bit
-      // double Motor1Distance = sqrt(pow((double)(-1*_xCordOfMotor) - (double)(xxx),2)+pow((double)(_yCordOfMotor) - (double(yyy)),2));
-      // double Motor2Distance = sqrt(pow((double)   (_xCordOfMotor) - (double)(xxx),2)+pow((double)(_yCordOfMotor) - (double)(yyy),2));
-
-      // *aChainLength = Motor1Distance;
-      // *bChainLength = Motor2Distance;
-      return;
+      *aChainLength = Chain1 - settings.rotationDiskRadius;
+      *bChainLength = Chain2 - settings.rotationDiskRadius;
   }
 
 #endif
