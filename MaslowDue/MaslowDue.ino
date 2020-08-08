@@ -604,11 +604,8 @@ void loop()
 
     #ifdef MASLOWCNC
 
-    void recomputeGeometry(void);
-
         case 'a':
         // TEST
-          recomputeGeometry();
           xx = DEBUG_COM_PORT.parseFloat();
           yy = DEBUG_COM_PORT.parseFloat();
           positionToChain(xx, yy, &t1, &t2);   // test kinematics

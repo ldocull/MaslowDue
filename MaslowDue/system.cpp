@@ -25,15 +25,22 @@
 
   #define SPROCKET_RADIUS_MM      (10.1)
 
-  void  triangularInverse(float xTarget,float yTarget, float* aChainLength, float* bChainLength);
+  #define KINEMATICSMAXGUESS 200
+  #define KINEMATICSDBG 1 // output to serial while computing kinematics.
+  #define KINEMATICSMAXERR 0.1 // maximum error value in forward kinematics. bigger = faster.
+
+  // Main kinematics functions.
+  void  triangularInverse(float xTarget, float yTarget, float* aChainLength, float* bChainLength);
   void  forwardKinematics(float chainALength, float chainBLength, float* xPos, float* yPos);
   void  triangular(float aChainLength, float bChainLength, float *x,float *y );
-  void  recomputeGeometry(void);
+  void _recomputeGeometry(void);
+  void _verifyValidTarget(float* xTarget,float* yTarget);
+
+  // Various cached pre-computed values.
   float height_to_bit; //distance between sled attach point and bit
   float R = SPROCKET_RADIUS_MM;                      //sprocket radius
   float halfWidth;                     //Half the machine width
   float halfHeight;                    //Half the machine height
-  void _verifyValidTarget(float* xTarget,float* yTarget);
   float _xCordOfMotor;
   float _yCordOfMotor;
 
@@ -60,14 +67,6 @@ void system_init()
     PCICR |= (1 << CONTROL_INT);   // Enable Pin Change Interrupt
   #endif
 }
-
-  void  chainToPosition(float aChainLength, float bChainLength, float *x,float *y ) {
-    return forwardKinematics(aChainLength, bChainLength, x, y);
-  }
-
-  void  positionToChain(float xTarget,float yTarget, float* aChainLength, float* bChainLength) {
-    return triangularInverse(xTarget, yTarget, aChainLength, bChainLength);
-  }
 
 
 // Returns control pin state as a uint8 bitfield. Each bit indicates the input pin state, where
@@ -404,8 +403,31 @@ uint8_t system_check_travel_limits(float *target)
 
 #ifdef MASLOWCNC
 
-// recalculate machine base dimensions from settings (in mm)
-  void recomputeGeometry(void)
+  void  chainToPosition(float aChainLength, float bChainLength, float *x,float *y ) {
+    _recomputeGeometry();
+
+    #if defined (KINEMATICSDBG) && KINEMATICSDBG > 0
+      Serial.print(F("Message: chainToPosition(), chainLength: "));
+      Serial.print(aChainLength);
+      Serial.print(',');
+      Serial.print(bChainLength);
+      Serial.print(F("; (guess) position: "));
+      Serial.print(*x);
+      Serial.print(',');
+      Serial.print(*y);
+    #endif
+
+    return forwardKinematics(aChainLength, bChainLength, x, y);
+  }
+
+  void  positionToChain(float xTarget, float yTarget, float* aChainLength, float* bChainLength) {
+    _recomputeGeometry();
+
+    return triangularInverse(xTarget, yTarget, aChainLength, bChainLength);
+  }
+
+  // recalculate machine base dimensions from settings (in mm)
+  void _recomputeGeometry(void)
   {
       /*
       Some variables are computed on class creation for the geometry of the machine to reduce overhead,
@@ -415,55 +437,61 @@ uint8_t system_check_travel_limits(float *target)
       halfHeight = (settings.machineHeight / 2.0);
       _xCordOfMotor = (settings.distBetweenMotors/2);
       _yCordOfMotor = (halfHeight + settings.motorOffsetY);
+
+    #if defined (KINEMATICSDBG) && KINEMATICSDBG > 0
+      Serial.print(F("Message: recomputeGeometry(), halfSize: "));
+      Serial.print(halfWidth);
+      Serial.print(',');
+      Serial.print(halfHeight);
+      Serial.print(F("; motor position: "));
+      Serial.print(_xCordOfMotor);
+      Serial.print(',');
+      Serial.print(_yCordOfMotor);
+    #endif
   }
 
-// Maslow math - coordinate system tranformation
-// calculate machine coordinate (x-y) postion from chain lengths in mm (pos in mm)
+  // Maslow math - coordinate system tranformation
+  // calculate machine coordinate (x-y) postion from chain lengths in mm (pos in mm)
   void triangular(float aChainLength, float bChainLength, float *x,float *y )
   {
-    recomputeGeometry();
-//----------------------------------------------------------------------> arbitrary triangle method:
-//                   cos(B) = ((b^2 + c^2 - a^2) / (2 * b * c))
-//                   theta = arccos(B)
-//                   x = a * cos(theta)
-//                   y = a * sin(theta)
-//
-//     double theta = acos( (pow((_xCordOfMotor * 2), 2) + pow(aChainLength,2) - pow(bChainLength,2)) / (-2.0 * aChainLength * (_xCordOfMotor * 2)));
-//     double x_pos = (aChainLength * cos(theta));
-//     double y_pos = (aChainLength * sin(theta));
-//
-//----------------------------------------------------------------------> intersecting circle method:
-//                    x = (d^2 - R^2 + L^2) / 2 * d
-//                     where d is the distance between motors
-//                    R is right chain length
-//                    L is left chain length
-//                    y^2 = R^2 - x^2
-//
+    //----------------------------------------------------------------------> arbitrary triangle method:
+    //                   cos(B) = ((b^2 + c^2 - a^2) / (2 * b * c))
+    //                   theta = arccos(B)
+    //                   x = a * cos(theta)
+    //                   y = a * sin(theta)
+    //
+    //     double theta = acos( (pow((_xCordOfMotor * 2), 2) + pow(aChainLength,2) - pow(bChainLength,2)) / (-2.0 * aChainLength * (_xCordOfMotor * 2)));
+    //     double x_pos = (aChainLength * cos(theta));
+    //     double y_pos = (aChainLength * sin(theta));
+    //
+    //----------------------------------------------------------------------> intersecting circle method:
+    //                    x = (d^2 - R^2 + L^2) / 2 * d
+    //                     where d is the distance between motors
+    //                    R is right chain length
+    //                    L is left chain length
+    //                    y^2 = R^2 - x^2
+    //
      double x_pos = ((pow((_xCordOfMotor * 2), 2) - pow(bChainLength,2) +  pow(aChainLength,2)) / (2.0 * (_xCordOfMotor * 2)));
      double y_pos = sqrt(pow(aChainLength,2) - pow(x_pos,2));
-//
+
      x_pos = (float)(-1*_xCordOfMotor) + x_pos;  // apply table offsets to regain absolute position
      y_pos = (float)(_yCordOfMotor - y_pos);
 
-// back out any correction factor
      x_pos /= (double)settings.XcorrScaling;
      y_pos /= (double)settings.YcorrScaling;
-//
+
      *x = (float) x_pos;
      *y = (float) y_pos;
   }
 
-  #define KINEMATICSMAXGUESS 200
-
+  // forwardKinematics() are able to compensate for chain sag, an improvement on triangular().
+  // It takes an iterative approach to solving for chain sag, attempting to achieve
+  // the desired KINEMATICSMAXERR. It is less performant, and care should be used to avoid
+  // pegging the limited Arduino CPU.
   void forwardKinematics(float chainALength, float chainBLength, float* xPos, float* yPos)
   {
-    Serial.println(F("[Forward Calculating Position]"));
-
-    float guessLengthA;
-    float guessLengthB;
-
+    float guessLengthA = 0, guessLengthB = 0;
     float xGuess = *xPos, yGuess = *yPos;
-
     int guessCount = 0;
 
     while(1){
@@ -490,21 +518,30 @@ uint8_t system_check_travel_limits(float *target)
         #endif
 
         //if we've converged on the point...or it's time to give up, exit the loop
-        if ((abs(aChainError) < .1 && abs(bChainError) < .1) or
+        if ((abs(aChainError) <= KINEMATICSMAXERR && abs(bChainError) <= KINEMATICSMAXERR) or
           guessCount > KINEMATICSMAXGUESS or
           guessLengthA > settings.chainLength or
           guessLengthB > settings.chainLength)
         {
+            #if defined (KINEMATICSDBG) && KINEMATICSDBG > 0
+              Serial.print(F("Message: forwardKinematics() complete; best guess: "));
+              Serial.print(guessLengthA);
+              Serial.print(',');
+              Serial.print(guessLengthB);
+              Serial.print(F("; guessCount: "));
+              Serial.print(guessCount);
+            #endif
+
             if((guessCount > KINEMATICSMAXGUESS) or guessLengthA > settings.chainLength or guessLengthB > settings.chainLength){
                 Serial.print(F("Message: Unable to find valid machine position for chain lengths "));
                 Serial.print(chainALength);
                 Serial.print(", ");
                 Serial.print(chainBLength);
-                Serial.println(F(" . Please set the chains to a known length (Actions -> Set Chain Lengths)"));
+                Serial.println(F(" . "));
                 *xPos = 0;
                 *yPos = 0;
             }
-            else{
+            else {
                 Serial.println("position loaded at:");
                 Serial.println(xGuess);
                 Serial.println(yGuess);
@@ -516,8 +553,8 @@ uint8_t system_check_travel_limits(float *target)
     }
   }
 
-// Maslow CNC calculation only. Returns x or y-axis "steps" based on Maslow motor steps.
-// converts current position two-chain intersection (steps) into x / y cartesian in STEPS..
+  // Maslow CNC calculation only. Returns x or y-axis "steps" based on Maslow motor steps.
+  // converts current position two-chain intersection (steps) into x / y cartesian in STEPS..
   void system_convert_maslow_to_xy_steps(int32_t *steps, int32_t *x_steps, int32_t *y_steps)
   {
     float x_pos, y_pos;
@@ -544,18 +581,16 @@ uint8_t system_check_travel_limits(float *target)
     return(y_steps);
   }
 
-// limit motion to stay within table (in mm)
-  void _verifyValidTarget(float* xTarget,float* yTarget)
+  // limit motion to stay within table (in mm)
+  void _verifyValidTarget(float* xTarget, float* yTarget)
   {
-      recomputeGeometry();
-
      *xTarget = (*xTarget < -halfWidth) ? -halfWidth : (*xTarget > halfWidth) ? halfWidth : *xTarget;
      *yTarget = (*yTarget < -halfHeight) ? -halfHeight : (*yTarget > halfHeight) ? halfHeight : *yTarget;
   }
 
-// calculate left and right (LEFT_MOTOR/RIGHT_MOTOR) chain lengths from X-Y cartesian coordinates  (in mm)
-// target is an absolute position in the frame
-  void triangularInverse(float xTarget,float yTarget, float* aChainLength, float* bChainLength)
+  // calculate left and right (LEFT_MOTOR/RIGHT_MOTOR) chain lengths from X-Y cartesian coordinates  (in mm)
+  // target is an absolute position in the frame
+  void triangularInverse(float xTarget, float yTarget, float* aChainLength, float* bChainLength)
   {
       //Confirm that the coordinates are on the table
       _verifyValidTarget(&xTarget, &yTarget);
