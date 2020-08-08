@@ -26,7 +26,7 @@
   #define SPROCKET_RADIUS_MM      (10.1)
 
   #define KINEMATICSMAXGUESS 200
-  #define KINEMATICSDBG 1 // output to serial while computing kinematics.
+  // #define KINEMATICSDBG 1 // output to serial while computing kinematics.
   #define KINEMATICSMAXERR 0.1 // maximum error value in forward kinematics. bigger = faster.
 
   // Main kinematics functions.
@@ -43,6 +43,10 @@
   float halfHeight;                    //Half the machine height
   float _xCordOfMotor;
   float _yCordOfMotor;
+
+  // Cached between forwardKinematic computations to provide a good guess (performance).
+  float _xLastPosition;
+  float _yLastPosition;
 #endif
 
 void system_init()
@@ -493,8 +497,8 @@ uint8_t system_check_travel_limits(float *target)
         float bChainError = chainBLength - guessLengthB;
 
         //adjust the guess based on the result
-        xGuess = xGuess + .1f*aChainError - .1f*bChainError;
-        yGuess = yGuess - .1f*aChainError - .1f*bChainError;
+        xGuess = xGuess + aChainError - bChainError;
+        yGuess = yGuess - aChainError - bChainError;
 
         guessCount++;
 
@@ -523,9 +527,11 @@ uint8_t system_check_travel_limits(float *target)
                 *yPos = 0;
             }
             else {
-                Serial.println("position loaded at:");
-                Serial.println(xGuess);
-                Serial.println(yGuess);
+                #if defined (KINEMATICSDBG) && KINEMATICSDBG > 0
+                  Serial.println("position loaded at:");
+                  Serial.println(xGuess);
+                  Serial.println(yGuess);
+                #endif
                 *xPos = xGuess;
                 *yPos = yGuess;
             }
@@ -538,14 +544,12 @@ uint8_t system_check_travel_limits(float *target)
   // converts current position two-chain intersection (steps) into x / y cartesian in STEPS..
   void system_convert_maslow_to_xy_steps(int32_t *steps, int32_t *x_steps, int32_t *y_steps)
   {
-    float x_pos, y_pos;
-
     chainToPosition((float)(steps[LEFT_MOTOR]/settings.steps_per_mm[LEFT_MOTOR]),
                     (float)(steps[RIGHT_MOTOR]/settings.steps_per_mm[RIGHT_MOTOR]),
-                    &x_pos, &y_pos);
+                    &_xLastPosition, &_yLastPosition);
 
-    *x_steps = (int32_t) x_pos * settings.steps_per_mm[X_AXIS];
-    *y_steps = (int32_t) y_pos * settings.steps_per_mm[Y_AXIS];
+    *x_steps = (int32_t) _xLastPosition * settings.steps_per_mm[X_AXIS];
+    *y_steps = (int32_t) _yLastPosition * settings.steps_per_mm[Y_AXIS];
   }
 
   int32_t system_convert_maslow_to_x_axis_steps(int32_t *steps)
