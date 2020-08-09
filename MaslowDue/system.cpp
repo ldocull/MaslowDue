@@ -23,9 +23,9 @@
 #ifdef MASLOWCNC
   #include "MaslowDue.h"
 
-  #define KINEMATICSMAXGUESS 200
-  // #define KINEMATICSDBG 1 // output to serial while computing kinematics.
-  #define KINEMATICSMAXERR 0.1 // maximum error value in forward kinematics. bigger = faster.
+  #define KINEMATICS_MAX_GUESS  200
+  // #define KINEMATICS_DBG 1 // output to serial while computing kinematics.
+  #define KINEMATICS_MAX_ERR    0.1 // maximum error value in forward kinematics. bigger = faster.
 
   // Main kinematics functions.
   void  triangularInverse(float xTarget, float yTarget, float* aChainLength, float* bChainLength);
@@ -384,7 +384,7 @@ uint8_t system_check_travel_limits(float *target)
     #elif defined(MASLOWCNC)
       if (idx == Z_AXIS) {
         // Maslow has a min Z setting in addition to the max Z.
-        if (target[idx] < settings.zMin || target[idx] > -settings.max_travel[idx]) { return(true); }
+        if (target[idx] < settings.zTravelMin || target[idx] > -settings.max_travel[idx]) { return(true); }
       } else {
         // Maslow homes at the center of the stock. The max travel setting refers to total size.
         float ht = settings.max_travel[idx] / -2.0f;
@@ -404,7 +404,7 @@ uint8_t system_check_travel_limits(float *target)
   void  chainToPosition(float aChainLength, float bChainLength, float *x,float *y ) {
     _recomputeGeometry();
 
-    #if defined (KINEMATICSDBG) && KINEMATICSDBG > 0
+    #if defined (KINEMATICS_DBG) && KINEMATICS_DBG > 0
       Serial.print(F("Message: chainToPosition(), chainLength: "));
       Serial.print(aChainLength);
       Serial.print(',');
@@ -415,7 +415,11 @@ uint8_t system_check_travel_limits(float *target)
       Serial.println(*y);
     #endif
 
-    return forwardKinematics(aChainLength, bChainLength, x, y);
+    if (settings.kinematicsMode == KINEMATICS_MODE_TRIANGULAR) {
+      return triangular(aChainLength, bChainLength, x, y);
+    } else {
+      return forwardKinematics(aChainLength, bChainLength, x, y);
+    }
   }
 
   void  positionToChain(float xTarget, float yTarget, float* aChainLength, float* bChainLength) {
@@ -434,7 +438,7 @@ uint8_t system_check_travel_limits(float *target)
       _xCordOfMotor = (settings.distBetweenMotors/2);
       _yCordOfMotor = ((settings.machineHeight / 2.0) + settings.motorOffsetY);
 
-    #if defined (KINEMATICSDBG) && KINEMATICSDBG > 0
+    #if defined (KINEMATICS_DBG) && KINEMATICS_DBG > 0
       Serial.print(F("Message: recomputeGeometry(), motor position: "));
       Serial.print(_xCordOfMotor);
       Serial.print(',');
@@ -478,7 +482,7 @@ uint8_t system_check_travel_limits(float *target)
 
   // forwardKinematics() are able to compensate for chain sag, an improvement on triangular().
   // It takes an iterative approach to solving for chain sag, attempting to achieve
-  // the desired KINEMATICSMAXERR. It is less performant, and care should be used to avoid
+  // the desired KINEMATICS_MAX_ERR. It is less performant, and care should be used to avoid
   // pegging the limited Arduino CPU.
   void forwardKinematics(float chainALength, float chainBLength, float* xPos, float* yPos)
   {
@@ -500,12 +504,12 @@ uint8_t system_check_travel_limits(float *target)
         guessCount++;
 
         //if we've converged on the point...or it's time to give up, exit the loop
-        if ((abs(aChainError) <= KINEMATICSMAXERR && abs(bChainError) <= KINEMATICSMAXERR) or
-          guessCount > KINEMATICSMAXGUESS or
+        if ((abs(aChainError) <= KINEMATICS_MAX_ERR && abs(bChainError) <= KINEMATICS_MAX_ERR) or
+          guessCount > KINEMATICS_MAX_GUESS or
           guessLengthA > settings.chainLength or
           guessLengthB > settings.chainLength)
         {
-            #if defined (KINEMATICSDBG) && KINEMATICSDBG > 0
+            #if defined (KINEMATICS_DBG) && KINEMATICS_DBG > 0
               Serial.print(F("Message: forwardKinematics() complete; best guess: "));
               Serial.print(guessLengthA);
               Serial.print(',');
@@ -514,7 +518,7 @@ uint8_t system_check_travel_limits(float *target)
               Serial.println(guessCount);
             #endif
 
-            if((guessCount > KINEMATICSMAXGUESS) or guessLengthA > settings.chainLength or guessLengthB > settings.chainLength){
+            if((guessCount > KINEMATICS_MAX_GUESS) or guessLengthA > settings.chainLength or guessLengthB > settings.chainLength){
                 Serial.print(F("Message: Unable to find valid machine position for chain lengths "));
                 Serial.print(chainALength);
                 Serial.print(", ");
@@ -524,7 +528,7 @@ uint8_t system_check_travel_limits(float *target)
                 *yPos = 0;
             }
             else {
-                #if defined (KINEMATICSDBG) && KINEMATICSDBG > 0
+                #if defined (KINEMATICS_DBG) && KINEMATICS_DBG > 0
                   Serial.println("position loaded at:");
                   Serial.println(xGuess);
                   Serial.println(yGuess);

@@ -94,7 +94,7 @@ settings_t settings;
     .XcorrScaling = default_XcorrScaling,
     .YcorrScaling = default_YcorrScaling,
 
-    .zMin = default_ZMin };
+    .zTravelMin = default_ZTravelMin };
 
 #else
 
@@ -399,7 +399,8 @@ uint8_t settings_store_global_setting(uint8_t parameter, float value) {
         case GRBL_ROTATION_DISK_RADIUS: settings.rotationDiskRadius = (float)value ; break;
 
         case GRBL_CHAIN_LENGTH: settings.chainLength = (float)value ; break;
-        case GRBL_Z_MIN: settings.zMin = (float)value; break;
+        case GRBL_Z_TRAVEL_MIN: settings.zTravelMin = (float)value; break;
+        case GRBL_KINEMATICS_MODE: settings.kinematicsMode = int_value; break;
       #endif
 
       default:

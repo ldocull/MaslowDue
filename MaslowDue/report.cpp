@@ -61,7 +61,8 @@ static void report_util_setting_string(uint8_t n) {
     case GRBL_RIGHT_CHAIN_TOLERANCE: printPgmString(PSTR(" (right chain tolerance)")); break;
     case GRBL_ROTATION_DISK_RADIUS: printPgmString(PSTR(" (rotation disk radius)")); break;
     case GRBL_CHAIN_LENGTH: printPgmString(PSTR(" (chain length)")); break;
-    case GRBL_Z_MIN: printPgmString(PSTR(" (z minimum)")); break;
+    case GRBL_Z_TRAVEL_MIN: printPgmString(PSTR(" (Z-axis maximum travel, millimeters)")); break;
+    case GRBL_KINEMATICS_MODE: printPgmString(PSTR(" (kinematics mode, 0=forward, 1=triangular)")); break;
 #endif
     default: break;
   }
@@ -225,7 +226,8 @@ void report_grbl_settings() {
     report_util_float_setting(GRBL_ROTATION_DISK_RADIUS,settings.rotationDiskRadius,N_DECIMAL_SETTINGVALUE);
 
     report_util_float_setting(GRBL_CHAIN_LENGTH,settings.chainLength,N_DECIMAL_SETTINGVALUE);
-    report_util_float_setting(GRBL_Z_MIN,settings.zMin,N_DECIMAL_SETTINGVALUE);
+    report_util_float_setting(GRBL_Z_TRAVEL_MIN,settings.zTravelMin,N_DECIMAL_SETTINGVALUE);
+    report_util_uint8_setting(GRBL_KINEMATICS_MODE,settings.kinematicsMode);
 
     #endif
 

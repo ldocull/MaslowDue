@@ -194,6 +194,9 @@
 #define MAX_PWM_LEVEL 255
 #define MIN_PWM_LEVEL 5
 
+#define KINEMATICS_MODE_FORWARD     0
+#define KINEMATICS_MODE_TRIANGULAR  1
+
 struct PID_MOTION
 {
   long int Kp;

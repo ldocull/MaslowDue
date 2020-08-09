@@ -150,7 +150,8 @@ typedef struct {
 
     float XcorrScaling;
     float YcorrScaling;
-    float zMin;
+    float zTravelMin;
+    uint8_t kinematicsMode;
   #endif
 
 
