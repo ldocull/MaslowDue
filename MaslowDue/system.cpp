@@ -580,11 +580,22 @@ uint8_t system_check_travel_limits(float *target)
       double Motor1Distance = sqrt(pow((double)(-1*_xCordOfMotor) - (double)(xxx),2)+pow((double)(_yCordOfMotor) - (double(yyy)),2));
       double Motor2Distance = sqrt(pow((double)   (_xCordOfMotor) - (double)(xxx),2)+pow((double)(_yCordOfMotor) - (double)(yyy),2));
 
-      // Assumes that the chain is over the sprocket (under is not supported)
-      double Chain1Angle = asin((_yCordOfMotor - yTarget)/Motor1Distance) + asin(_sprocketRadius/Motor1Distance);
-      double Chain2Angle = asin((_yCordOfMotor - yTarget)/Motor2Distance) + asin(_sprocketRadius/Motor2Distance);
-      double Chain1AroundSprocket = _sprocketRadius * Chain1Angle;
-      double Chain2AroundSprocket = _sprocketRadius * Chain2Angle;
+      //Set up variables
+      double Chain1Angle = 0, Chain2Angle = 0;
+      double Chain1AroundSprocket = 0, Chain2AroundSprocket = 0;
+
+      //Calculate the chain angles from horizontal, based on if the chain connects to the sled from the top or bottom of the sprocket
+      if(settings.chainOverSprocket == 1){
+        Chain1Angle = asin((_yCordOfMotor - yTarget)/Motor1Distance) + asin(_sprocketRadius/Motor1Distance);
+        Chain2Angle = asin((_yCordOfMotor - yTarget)/Motor2Distance) + asin(_sprocketRadius/Motor2Distance);
+        Chain1AroundSprocket = _sprocketRadius * Chain1Angle;
+        Chain2AroundSprocket = _sprocketRadius * Chain2Angle;
+      } else {
+        Chain1Angle = asin((_yCordOfMotor - yTarget)/Motor1Distance) - asin(_sprocketRadius/Motor1Distance);
+        Chain2Angle = asin((_yCordOfMotor - yTarget)/Motor2Distance) - asin(_sprocketRadius/Motor2Distance);
+        Chain1AroundSprocket = _sprocketRadius * (3.14159 - Chain1Angle);
+        Chain2AroundSprocket = _sprocketRadius * (3.14159 - Chain2Angle);
+      }
 
       //Calculate the straight chain length from the sprocket to the bit
       double srsqrd = pow(_sprocketRadius,2);
